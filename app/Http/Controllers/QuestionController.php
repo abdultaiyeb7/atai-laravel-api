@@ -131,6 +131,7 @@ public function deleteQuestion(Request $request)
         // Validate request data
         $validatedData = $request->validate([
             'action_type' => 'required|in:D',
+            'p_id' => 'required|integer|min:1', // Ensure p_id is required and greater than 0
             'p_question_text' => 'required|string',
             'p_question_label' => 'nullable|string|max:500',
             'p_question_type' => 'required|integer|in:1,2,3,4,5,6',
@@ -139,21 +140,12 @@ public function deleteQuestion(Request $request)
             'p_question_parent_level' => 'nullable|integer',
         ]);
 
-        // Fetch the question ID based on the provided data
-        $question = Question::where('question_text', $validatedData['p_question_text'])
-                            ->where('client_id', $validatedData['p_client_id'])
-                            ->first();
-
-        if (!$question) {
-            return response()->json(['message' => 'Error: Question not found or client_id mismatch.'], 404);
-        }
-
         // Call the stored procedure for deletion
         DB::statement(
             'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, @message)',
             [
                 $validatedData['action_type'],
-                $question->id, // p_id fetched dynamically
+                $validatedData['p_id'],
                 $validatedData['p_question_text'],
                 $validatedData['p_question_label'] ?? null,
                 $validatedData['p_question_type'],
@@ -173,6 +165,7 @@ public function deleteQuestion(Request $request)
         return response()->json(['message' => $e->getMessage()], 500);
     }
 }
+
 
 
 }
