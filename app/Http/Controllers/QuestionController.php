@@ -85,44 +85,44 @@ private function buildHierarchy($questionsByParent, $parentLevel)
 }
 
 
-// public function updateQuestion(Request $request)
-// {
-//     try {
-//         $validatedData = $request->validate([
-//             'action_type' => 'required|in:U',
-//             'p_id' => 'required|integer',
-//             'p_question_text' => 'required|string',
-//             'p_question_label' => 'nullable|string|max:500',
-//             'p_question_type' => 'nullable|integer|in:1,2,3,4,5,6',
-//             'p_client_id' => 'required|integer',
-//             'p_question_level' => 'nullable|integer',
-//             'p_question_parent_level' => 'nullable|integer',
-//         ]);
+public function updateQuestion(Request $request)
+{
+    try {
+        $validatedData = $request->validate([
+            'action_type' => 'required|in:U',
+            'p_id' => 'required|integer',
+            'p_question_text' => 'required|string',
+            'p_question_label' => 'nullable|string|max:500',
+            'p_question_type' => 'nullable|integer|in:1,2,3,4,5,6',
+            'p_client_id' => 'required|integer',
+            'p_question_level' => 'nullable|integer',
+            'p_question_parent_level' => 'nullable|integer',
+        ]);
 
-//         // Call the stored procedure for updating the question
-//         DB::statement(
-//             'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, @message)',
-//             [
-//                 $validatedData['action_type'],
-//                 $validatedData['p_id'],
-//                 $validatedData['p_question_text'],
-//                 $validatedData['p_question_label'] ?? null,
-//                 $validatedData['p_question_type'] ?? null,
-//                 $validatedData['p_client_id'],
-//                 $validatedData['p_question_level'] ?? null,
-//                 $validatedData['p_question_parent_level'] ?? null,
-//             ]
-//         );
+        // Call the stored procedure for updating the question
+        DB::statement(
+            'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, @message)',
+            [
+                $validatedData['action_type'],
+                $validatedData['p_id'],
+                $validatedData['p_question_text'],
+                $validatedData['p_question_label'] ?? null,
+                $validatedData['p_question_type'] ?? null,
+                $validatedData['p_client_id'],
+                $validatedData['p_question_level'] ?? null,
+                $validatedData['p_question_parent_level'] ?? null,
+            ]
+        );
 
-//         // Fetch the OUT parameter value
-//         $result = DB::select('SELECT @message AS message');
-//         $message = $result[0]->message;
+        // Fetch the OUT parameter value
+        $result = DB::select('SELECT @message AS message');
+        $message = $result[0]->message;
 
-//         return response()->json(['message' => $message], 200);
-//     } catch (\Exception $e) {
-//         return response()->json(['message' => $e->getMessage()], 500);
-//     }
-// }
+        return response()->json(['message' => $message], 200);
+    } catch (\Exception $e) {
+        return response()->json(['message' => $e->getMessage()], 500);
+    }
+}
 
     
 public function deleteQuestion(Request $request)
