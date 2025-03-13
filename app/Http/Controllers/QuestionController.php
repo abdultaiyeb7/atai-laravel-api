@@ -258,5 +258,37 @@ public function deleteQuestion(Request $request)
 }
 
 
+    /**
+     * ✅ POST API: Check if client_id exists in the database
+     */
+    public function checkClientExists(Request $request)
+    {
+        $clientId = $request->input('client_id');
+
+        $exists = DB::table('questions')->where('client_id', $clientId)->exists();
+
+        if ($exists) {
+            return response()->json(['message' => 'Client exists'], 200);
+        } else {
+            return response()->json(['message' => 'Client does not exist'], 404);
+        }
+    }
+
+    /**
+     * ✅ GET API: Get all questions by client_id
+     */
+    public function getQuestionsByClient(Request $request)
+    {
+        $clientId = $request->query('client_id');
+
+        $questions = Question::where('client_id', $clientId)->get();
+
+        if ($questions->isEmpty()) {
+            return response()->json(['message' => 'No questions found for this client_id'], 404);
+        }
+
+        return response()->json(['questions' => $questions], 200);
+    }
+
 
 }

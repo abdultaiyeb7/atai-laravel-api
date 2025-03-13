@@ -19,3 +19,7 @@ Route::get('/get-questions', [QuestionController::class, 'getQuestions']); // Ne
  Route::put('/update-question', [QuestionController::class, 'updateQuestion']);
 
 Route::delete('/delete-question', [QuestionController::class, 'deleteQuestion']);
+
+
+Route::post('/check-client', [QuestionController::class, 'checkClientExists']);
+Route::get('/get-questions-by-client', [QuestionController::class, 'getQuestionsByClient']);
