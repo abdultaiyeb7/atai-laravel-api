@@ -4,144 +4,216 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
+use App\Mail\SendMail;
 
 class UserController extends Controller
 {
+    /**
+     * Manage User (Insert/Update)
+     */
     public function manageUser(Request $request)
     {
+        // Validate input
+        $validator = Validator::make($request->all(), [
+            'p_mobile' => 'required|digits:10',
+            'p_email' => 'nullable|email',
+            'p_user_name' => 'required|string|max:255',
+        ], [
+            'p_mobile.required' => 'Mobile number is required.',
+            'p_mobile.digits' => 'Mobile number must be exactly 10 digits.',
+            'p_email.email' => 'Invalid email format.',
+            'p_user_name.required' => 'User name is required.',
+        ]);
+
+        // Return validation errors if any
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed!',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
         $action = $request->input('p_action');
         $userId = $request->input('p_user_id', 0);
         $message = '';
 
-        // Call the stored procedure
-        $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
-            $action,
-            $userId,
-            $request->input('p_user_name'),
-            $request->input('p_email'),
-            $request->input('p_mobile'),
-            $request->input('p_profile_pic'),
-            $request->input('p_status'),
-            $request->input('p_token'),
-            $request->input('p_otp'),
-            $request->input('p_is_verified'),
-            $request->input('p_is_available'),
-            &$message, // Output parameter
-            $request->input('P_pannumber'),
-            $request->input('p_DocPath'),
-            $request->input('p_role_abbreviation'),
-            $request->input('p_ClientId'),
-        ]);
+        try {
+            // Call the stored procedure
+            $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?)', [
+                $action,
+                $userId,
+                $request->input('p_user_name'),
+                $request->input('p_email'),
+                $request->input('p_mobile'),
+                $request->input('p_profile_pic'),
+                $request->input('p_status'),
+                $request->input('p_token'),
+                $request->input('p_otp'),
+                $request->input('p_is_verified'),
+                $request->input('p_is_available'),
+                $request->input('P_pannumber'),
+                $request->input('p_DocPath'),
+                $request->input('p_role_abbreviation'),
+                $request->input('p_ClientId'),
+            ]);
 
-        // Set the response message
-        if ($action === 'I') {
-            $message = "User " . $userId . " inserted successfully.";
-        } elseif ($action === 'U') {
-            $message = "User " . $userId . " updated successfully.";
+            // Fetch stored procedure message
+            $messageResult = DB::select('SELECT @message as message');
+            $message = $messageResult[0]->message ?? 'Operation completed successfully.';
+
+            // Send email notification if email is provided
+            if (!empty($request->input('p_email'))) {
+                $emailData = [
+                    'name' => $request->input('p_user_name'),
+                    'subject' => 'User Account Notification',
+                    'message' => 'Dear ' . $request->input('p_user_name') . ', your account has been ' . 
+                        ($action === 'I' ? 'created' : 'updated') . ' successfully.',
+                ];
+
+                Mail::to($request->input('p_email'))->send(new SendMail($emailData));
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => $message,
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Database error!',
+                'error_details' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'message' => $message,
-            'data' => $result
-        ]);
     }
 
+    /**
+     * Update User
+     */
     public function updateUser(Request $request)
     {
         $userId = $request->input('p_user_id');
-        $message = '';
-
         if (!$userId) {
             return response()->json([
-                'error' => 'User ID is required for update'
+                'status' => 'error',
+                'message' => 'User ID is required for update'
             ], 400);
         }
 
-        // Call the stored procedure
-        $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
-            'U', // Action for update
-            $userId,
-            $request->input('p_user_name'),
-            $request->input('p_email'),
-            $request->input('p_mobile'),
-            $request->input('p_profile_pic'),
-            $request->input('p_status'),
-            $request->input('p_token'),
-            $request->input('p_otp'),
-            $request->input('p_is_verified'),
-            $request->input('p_is_available'),
-            &$message, // Output parameter
-            $request->input('P_pannumber'),
-            $request->input('p_DocPath'),
-            $request->input('p_role_abbreviation'),
-            $request->input('p_ClientId'),
-        ]);
+        $message = '';
 
-        // Set the response message
-        $message = "User with ID " . $userId . " updated successfully.";
+        try {
+            $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?)', [
+                'U', // Update action
+                $userId,
+                $request->input('p_user_name'),
+                $request->input('p_email'),
+                $request->input('p_mobile'),
+                $request->input('p_profile_pic'),
+                $request->input('p_status'),
+                $request->input('p_token'),
+                $request->input('p_otp'),
+                $request->input('p_is_verified'),
+                $request->input('p_is_available'),
+                $request->input('P_pannumber'),
+                $request->input('p_DocPath'),
+                $request->input('p_role_abbreviation'),
+                $request->input('p_ClientId'),
+            ]);
 
-        return response()->json([
-            'message' => $message,
-            'data' => $result
-        ]);
+            // Fetch stored procedure message
+            $messageResult = DB::select('SELECT @message as message');
+            $message = $messageResult[0]->message ?? 'User updated successfully.';
+
+            return response()->json([
+                'status' => 'success',
+                'message' => $message,
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Database error!',
+                'error_details' => $e->getMessage()
+            ], 500);
+        }
     }
 
+    /**
+     * Delete User
+     */
     public function deleteUser(Request $request)
-{
-    $userId = $request->input('p_user_id');
+    {
+        $userId = $request->input('p_user_id');
 
-    if (!$userId) {
-        return response()->json([
-            'error' => 'User ID is required for deletion'
-        ], 400);
+        if (!$userId) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User ID is required for deletion'
+            ], 400);
+        }
+
+        try {
+            DB::statement('CALL manage_user(?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, NULL)', [
+                'D', // Delete action
+                $userId
+            ]);
+
+            // Fetch stored procedure message
+            $messageResult = DB::select('SELECT @message as message');
+            $message = $messageResult[0]->message ?? 'User deleted successfully.';
+
+            return response()->json([
+                'status' => 'success',
+                'message' => $message
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Database error during deletion!',
+                'error_details' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    // Call the stored procedure
-    DB::statement('CALL manage_user(?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, NULL)', [
-        'D', // Action for delete
-        $userId
-    ]);
+    /**
+     * Get User
+     */
+    // public function getUser(Request $request)
+    // {
+    //     try {
+    //         $userId = $request->query('p_user_id');
+    //         $email = $request->query('p_email');
+    //         $mobile = $request->query('p_mobile');
+    //         $panNumber = $request->query('p_PANNumber');
 
-    // Retrieve the message from the session variable
-    $messageResult = DB::select('SELECT @message as message');
-    $message = $messageResult[0]->message ?? 'No message returned';
+    //         // Call the stored procedure
+    //         $users = DB::select('CALL manage_user(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, @message, ?, NULL, NULL, NULL)', [
+    //             'G', // Get action
+    //             $userId,
+    //             $email,
+    //             $mobile,
+    //             $panNumber
+    //         ]);
 
-    return response()->json([
-        'message' => $message
-    ]);
-}
+    //         // Fetch stored procedure message
+    //         $messageResult = DB::select('SELECT @message as message');
+    //         $message = $messageResult[0]->message ?? 'Data retrieved successfully.';
 
-// public function getUser(Request $request)
-// {
-//     try {
-//         $userId = $request->query('p_user_id');
-//         $email = $request->query('p_email');
-//         $mobile = $request->query('p_mobile');
-//         $panNumber = $request->query('p_PANNumber');
-
-//         // Call the stored procedure
-//         $users = DB::select('CALL manage_user(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, @message, ?, NULL, NULL, NULL)', [
-//             'G', // Action for get
-//             $userId,
-//             $email,
-//             $mobile,
-//             $panNumber
-//         ]);
-
-//         // Retrieve the message from MySQL
-//         $messageResult = DB::select('SELECT @message as message');
-//         $message = $messageResult[0]->message ?? 'Something went wrong!';
-
-//         return response()->json([
-//             'message' => $message,
-//             'data' => $users
-//         ]);
-//     } catch (\Exception $e) {
-//         return response()->json([
-//             'error' => 'Something went wrong!',
-//             'details' => $e->getMessage()
-//         ], 500);
-//     }
-// }
-
+    //         return response()->json([
+    //             'status' => 'success',
+    //             'message' => $message,
+    //             'data' => $users
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Something went wrong!',
+    //             'error_details' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 }
