@@ -265,7 +265,7 @@ public function deleteQuestion(Request $request)
     {
         $clientId = $request->input('client_id');
 
-        $exists = DB::table('questions')->where('client_id', $clientId)->exists();
+        $exists = DB::table('clients')->where('id', $clientId)->exists();
 
         if ($exists) {
             return response()->json(['message' => 'Client exists'], 200);
