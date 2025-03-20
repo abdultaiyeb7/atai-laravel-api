@@ -182,64 +182,83 @@ class UserController extends Controller
     /**
      * Get User
      */
-    // public function getUser(Request $request)
-    // {
-    //     try {
-    //         $userId = $request->query('p_user_id');
-    //         $email = $request->query('p_email');
-    //         $mobile = $request->query('p_mobile');
-    //         $panNumber = $request->query('p_PANNumber');
+    
+//     public function getUser(Request $request)
+// {
+//     try {
+//         $userId = $request->query('p_user_id');
+//         $email = $request->query('p_email');
+//         $mobile = $request->query('p_mobile');
+//         $panNumber = $request->query('p_PANNumber');
 
-    //         // Call the stored procedure
-    //         $users = DB::select('CALL manage_user(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, @message, ?, NULL, NULL, NULL)', [
-    //             'G', // Get action
-    //             $userId,
-    //             $email,
-    //             $mobile,
-    //             $panNumber
-    //         ]);
+//         // Ensure NULL is passed for missing parameters
+//         $results = DB::select('CALL manage_user(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, NULL)', [
+//             'G', // Action for GET
+//             $userId ?: NULL,
+//             $email ?: NULL,
+//             $mobile ?: NULL,
+//             $panNumber ?: NULL
+//         ]);
 
-    //         // Fetch stored procedure message
-    //         $messageResult = DB::select('SELECT @message as message');
-    //         $message = $messageResult[0]->message ?? 'Data retrieved successfully.';
+//         // Fetch the output message
+//         $messageResult = DB::select("SELECT @message AS message");
+//         $message = $messageResult[0]->message ?? 'Something went wrong!';
 
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'message' => $message,
-    //             'data' => $users
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'Something went wrong!',
-    //             'error_details' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
+//         // ✅ NEW: Check if no user is found
+//         if (empty($results)) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'User not found!',
+//             ], 404);
+//         }
 
-    public function getUser(Request $request)
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => $message,
+//             'data' => $results
+//         ]);
+
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Something went wrong!',
+//             'error_details' => $e->getMessage()
+//         ], 500);
+//     }
+// }
+
+public function getUser(Request $request)
 {
     try {
         $userId = $request->query('p_user_id');
         $email = $request->query('p_email');
         $mobile = $request->query('p_mobile');
         $panNumber = $request->query('p_PANNumber');
+        $clientId = $request->query('p_ClientId'); // ✅ Added Client ID
 
         // Ensure NULL is passed for missing parameters
-        $results = DB::select('CALL manage_user(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, NULL)', [
+        $results = DB::select('CALL manage_user(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, ?)', [
             'G', // Action for GET
             $userId ?: NULL,
             $email ?: NULL,
             $mobile ?: NULL,
-            $panNumber ?: NULL
+            $panNumber ?: NULL,
+            $clientId ?: NULL // ✅ Passed Client ID to the stored procedure
         ]);
 
         // Fetch the output message
         $messageResult = DB::select("SELECT @message AS message");
         $message = $messageResult[0]->message ?? 'Something went wrong!';
 
-        // ✅ NEW: Check if no user is found
+        // ✅ Check if no user is found
         if (empty($results)) {
+            // Check if the issue is with Client ID
+            if ($clientId) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Client ID not found!',
+                ], 404);
+            }
             return response()->json([
                 'status' => 'error',
                 'message' => 'User not found!',
@@ -260,5 +279,7 @@ class UserController extends Controller
         ], 500);
     }
 }
+
+
 
 }
