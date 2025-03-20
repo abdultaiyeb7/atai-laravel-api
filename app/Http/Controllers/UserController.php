@@ -216,4 +216,49 @@ class UserController extends Controller
     //         ], 500);
     //     }
     // }
+
+    public function getUser(Request $request)
+{
+    try {
+        $userId = $request->query('p_user_id');
+        $email = $request->query('p_email');
+        $mobile = $request->query('p_mobile');
+        $panNumber = $request->query('p_PANNumber');
+
+        // Ensure NULL is passed for missing parameters
+        $results = DB::select('CALL manage_user(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, NULL)', [
+            'G', // Action for GET
+            $userId ?: NULL,
+            $email ?: NULL,
+            $mobile ?: NULL,
+            $panNumber ?: NULL
+        ]);
+
+        // Fetch the output message
+        $messageResult = DB::select("SELECT @message AS message");
+        $message = $messageResult[0]->message ?? 'Something went wrong!';
+
+        // ✅ NEW: Check if no user is found
+        if (empty($results)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found!',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => $message,
+            'data' => $results
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Something went wrong!',
+            'error_details' => $e->getMessage()
+        ], 500);
+    }
+}
+
 }

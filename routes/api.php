@@ -36,4 +36,4 @@ Route::put('/manage-user', [UserController::class, 'updateUser']);
 Route::delete('/manage-user', [UserController::class, 'deleteUser']);
 
 
-// Route::get('/manage-user', [UserController::class, 'getUser']);
+ Route::get('/manage-user', [UserController::class, 'getUser']);
