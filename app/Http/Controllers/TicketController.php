@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\TicketsData;
+use App\Models\UserConvJourney;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -66,4 +68,26 @@ class TicketController extends Controller
             return "Unknown Title"; // Default title if not found
         }
     }
+    public function getUserConversation(Request $request)
+    {
+        // Get user_id from request body (JSON)
+        $userId = $request->input('user_id');
+
+        if (!$userId) {
+            return response()->json(["message" => "User ID is required"], 400);
+        }
+
+        // Query the database
+        $convJourney = UserConvJourney::where('user_conv_journey_id', $userId)->first();
+
+        if (!$convJourney) {
+            return response()->json(["message" => "User conversation not found"], 404);
+        }
+
+        return response()->json([
+            "user_id" => $userId,
+            "user_conversation" => $convJourney->user_conversation
+        ], 200);
+    }
+    
 }

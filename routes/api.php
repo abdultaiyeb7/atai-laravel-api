@@ -29,3 +29,5 @@ Route::delete('/manage-user', [UserController::class, 'deleteUser']);
 
 
  Route::get('/tickets/get_all_tickets_info', [TicketController::class, 'getAllTicketsInfo']);
+
+ Route::get('/tickets/get_user_conversation', [TicketController::class, 'getUserConversation']);
