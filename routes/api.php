@@ -38,3 +38,12 @@ Route::delete('/manage-user', [UserController::class, 'deleteUser']);
 
 
  Route::get('/tickets/total_ticket_count', [TicketController::class, 'getTotalTicketCount']);
+
+
+ Route::post('/tickets/star_ticket', [TicketController::class, 'starTicket']);
+
+
+ Route::post('/tickets/un_star_ticket', [TicketController::class, 'unStarTicket']);
+
+
+ Route::get('/tickets/starred_ticket_count', [TicketController::class, 'getStarredTicketCount']);

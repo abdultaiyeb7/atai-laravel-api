@@ -7,7 +7,9 @@ use App\Models\UserConvJourney;
 use App\Models\UserInfo;
 use App\Models\callback;
 use App\Models\totalcount;
-
+use App\Models\ticket_starred;
+use App\Models\unStarTicket;
+use App\Models\getStarredTicket;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -161,4 +163,74 @@ class TicketController extends Controller
             return response()->json(["message" => "An error occurred while retrieving the total ticket count"], 500);
         }
     }
+
+    public function starTicket(Request $request)
+    {
+        try {
+            $ticketId = $request->input('ticket_id');
+
+            if (!$ticketId) {
+                return response()->json(["message" => "Ticket ID is required"], 400);
+            }
+
+            // Find the ticket
+            $ticket = ticket_starred::where('ticket_id', $ticketId)->first();
+
+            if (!$ticket) {
+                return response()->json(["message" => "Ticket not found"], 404);
+            }
+
+            // Mark the ticket as starred
+            $ticket->ticket_starred = true;
+            $ticket->save();
+
+            return response()->json(["message" => "Ticket starred successfully"], 200);
+        } catch (\Exception $e) {
+            Log::error("An error occurred: " . $e->getMessage());
+            return response()->json(["message" => "An error occurred while starring the ticket"], 500);
+        }
+    }
+
+    public function unStarTicket(Request $request)
+    {
+        try {
+            $ticketId = $request->input('ticket_id');
+
+            if (!$ticketId) {
+                return response()->json(["message" => "Ticket ID is required"], 400);
+            }
+
+            // Find the ticket
+            $ticket = unStarTicket::where('ticket_id', $ticketId)->first();
+
+            if (!$ticket) {
+                return response()->json(["message" => "Ticket not found"], 404);
+            }
+
+            // Mark the ticket as unstarred
+            $ticket->ticket_starred = false;
+            $ticket->save();
+
+            return response()->json(["message" => "Ticket un-starred successfully"], 200);
+        } catch (\Exception $e) {
+            Log::error("An error occurred: " . $e->getMessage());
+            return response()->json(["message" => "An error occurred while unstarring the ticket"], 500);
+        }
+    }
+
+    public function getStarredTicketCount()
+    {
+        try {
+            Log::info("Fetching count of starred tickets.");
+
+            // Count starred tickets
+            $starredTickets = getStarredTicket::where('ticket_starred', true)->count();
+
+            return response()->json(["starred_ticket_count" => $starredTickets], 200);
+        } catch (\Exception $e) {
+            Log::error("An error occurred: " . $e->getMessage());
+            return response()->json(["message" => "An error occurred while retrieving the starred ticket count"], 500);
+        }
+    }
+
 }
