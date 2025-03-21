@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\TicketsData;
 use App\Models\UserConvJourney;
+use App\Models\UserInfo;
+
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -90,4 +92,27 @@ class TicketController extends Controller
         ], 200);
     }
     
+    public function getTicketUserInfo(Request $request)
+    {
+        // Get ticket_id from request
+        $ticketId = $request->query('ticket_id');
+
+        if (!$ticketId) {
+            return response()->json(["message" => "Ticket ID is required"], 400);
+        }
+
+        // Query the database
+        $ticket = TicketsData::where('ticket_id', $ticketId)->first();
+
+        if (!$ticket) {
+            return response()->json(["message" => "Ticket not found"], 404);
+        }
+
+        return response()->json([
+            "user_id" => $ticket->user_id,
+            "user_name" => $ticket->user_name,
+            "email" => $ticket->email,
+            "contact" => $ticket->contact
+        ], 200);
+    }
 }
