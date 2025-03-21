@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\TicketsData;
 use App\Models\UserConvJourney;
 use App\Models\UserInfo;
+use App\Models\callback;
+use App\Models\totalcount;
 
 
 use Illuminate\Http\Request;
@@ -102,7 +104,7 @@ class TicketController extends Controller
         }
 
         // Query the database
-        $ticket = TicketsData::where('ticket_id', $ticketId)->first();
+        $ticket = UserInfo::where('ticket_id', $ticketId)->first();
 
         if (!$ticket) {
             return response()->json(["message" => "Ticket not found"], 404);
@@ -114,5 +116,49 @@ class TicketController extends Controller
             "email" => $ticket->email,
             "contact" => $ticket->contact
         ], 200);
+    }
+
+
+    public function getAllCallbackRequests()
+    {
+        try {
+            Log::info("Fetching all callback requests.");
+
+            // Query tickets where callback_requested is true and ticket is not closed
+            $callbackRequests = callback::where('callback_requested', true)
+                ->where('ticket_resolution_status', '!=', 'Closed')
+                ->get();
+
+            // Prepare response
+            $response = $callbackRequests->map(function ($ticket) {
+                return [
+                    "ticket_id" => $ticket->ticket_id,
+                    "user_name" => $ticket->user_name,
+                    "contact" => $ticket->contact,
+                    "email" => $ticket->email,
+                    "userquery" => $ticket->userquery ?? "", // Ensure it's not null
+                ];
+            });
+
+            return response()->json($response, 200);
+        } catch (\Exception $e) {
+            Log::error("An error occurred: " . $e->getMessage());
+            return response()->json(["message" => "An error occurred while retrieving callback requests"], 500);
+        }
+    }
+
+    public function getTotalTicketCount()
+    {
+        try {
+            Log::info("Fetching total ticket count.");
+
+            // Count total tickets
+            $totalTickets = totalcount::count();
+
+            return response()->json(["ticket_count" => $totalTickets], 200);
+        } catch (\Exception $e) {
+            Log::error("An error occurred: " . $e->getMessage());
+            return response()->json(["message" => "An error occurred while retrieving the total ticket count"], 500);
+        }
     }
 }
