@@ -10,6 +10,19 @@ use App\Models\totalcount;
 use App\Models\ticket_starred;
 use App\Models\unStarTicket;
 use App\Models\getStarredTicket;
+use App\Models\UserQueryResolution;
+use App\Models\updateCallbackRequestResolution;
+use App\Models\resolveTicket;
+use App\Models\getResolvedTicketCount;
+use App\Models\getUnresolvedTicketCount;
+use App\Models\getTicketResolvedTime;
+use App\Models\ChatbotData;
+use App\Models\saveRemarkAndFollowUp;
+use App\Models\getRemarks;
+use App\Models\getFollowUpTickets;
+use App\Models\updateTicketResolution;
+use App\Models\Status;
+
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -231,6 +244,377 @@ class TicketController extends Controller
             Log::error("An error occurred: " . $e->getMessage());
             return response()->json(["message" => "An error occurred while retrieving the starred ticket count"], 500);
         }
+    }
+
+    public function updateUserQueryResolutionStatus(Request $request)
+    {
+        try {
+            $ticketId = $request->input('ticket_id');
+            $status = $request->input('status');
+
+            Log::info("Received ticket_id: $ticketId, status: $status"); // Debugging
+
+            if (!$ticketId || !$status) {
+                return response()->json(["message" => "Ticket ID and status are required"], 400);
+            }
+
+            // Find the ticket
+            $ticket = UserQueryResolution::where('ticket_id', $ticketId)->first();
+
+            if (!$ticket) {
+                return response()->json(["message" => "Ticket not found"], 404);
+            }
+
+            if (!$ticket->userquery || trim($ticket->userquery) === "") {
+                return response()->json(["message" => "User query not present. Please check the ticket ID again."], 409);
+            }
+
+            // Update the resolution status
+            $ticket->userquery_resolution_status = $status;
+            $ticket->save();
+
+            return response()->json([
+                "message" => "User query resolution status updated successfully",
+                "ticket_id" => $ticketId,
+                "userquery_resolution_status" => $status
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error("Error: " . $e->getMessage());
+            return response()->json(["message" => "Internal server error"], 500);
+        }
+    }
+
+    public function updateCallbackRequestResolutionStatus(Request $request)
+    {
+        try {
+            $ticketId = $request->input('ticket_id');
+            $status = $request->input('status');
+
+            Log::info("Received ticket_id: $ticketId, status: $status"); // Debugging
+
+            if (!$ticketId || !$status) {
+                return response()->json(["message" => "Ticket ID and status are required"], 400);
+            }
+
+            // Find the ticket
+            $ticket = updateCallbackRequestResolution::where('ticket_id', $ticketId)->first();
+
+            if (!$ticket) {
+                return response()->json(["message" => "Ticket not found"], 404);
+            }
+
+            if (!$ticket->callback_requested) {
+                return response()->json(["message" => "Callback not requested. Please check the ticket ID again."], 409);
+            }
+
+            // Update the callback request resolution status
+            $ticket->callback_request_resolution_status = $status;
+            $ticket->save();
+
+            return response()->json([
+                "message" => "Callback request resolution status updated successfully",
+                "ticket_id" => $ticketId,
+                "callback_request_resolution_status" => $status
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error("Error: " . $e->getMessage());
+            return response()->json(["message" => "Internal server error"], 500);
+        }
+    }
+
+    public function resolveTicket(Request $request)
+    {
+        try {
+            $ticketId = $request->input('ticket_id');
+
+            Log::info("Resolving ticket: $ticketId"); // Debugging
+
+            if (!$ticketId) {
+                return response()->json(["message" => "Ticket ID is required"], 400);
+            }
+
+            // Find the ticket
+            $ticket = resolveTicket::where('ticket_id', $ticketId)->first();
+
+            if (!$ticket) {
+                return response()->json(["message" => "Ticket not found"], 404);
+            }
+
+            // Check conditions based on userquery and callback_requested
+            if ($ticket->userquery && !$ticket->callback_requested) {
+                // Check userquery_resolution_status
+                if ($ticket->userquery_resolution_status) {
+                    $ticket->is_ticket_resolved = true;
+                    $ticket->ticket_resolved = Carbon::now(); // Set current timestamp
+                    $ticket->follow_up = null; // Set follow-up to null
+                    $ticket->save();
+
+                    return response()->json([
+                        "message" => "Ticket resolved successfully",
+                        "ticket_id" => $ticketId
+                    ], 200);
+                } else {
+                    return response()->json(["message" => "User query is not resolved yet"], 412);
+                }
+            } 
+            elseif ($ticket->callback_requested && !$ticket->userquery) {
+                // Check callback_request_resolution_status
+                if ($ticket->callback_request_resolution_status) {
+                    $ticket->is_ticket_resolved = true;
+                    $ticket->ticket_resolved = Carbon::now(); // Set current timestamp
+                    $ticket->follow_up = null; // Set follow-up to null
+                    $ticket->save();
+
+                    return response()->json([
+                        "message" => "Ticket resolved successfully",
+                        "ticket_id" => $ticketId
+                    ], 200);
+                } else {
+                    return response()->json(["message" => "Callback request is not resolved yet"], 412);
+                }
+            } 
+            elseif ($ticket->userquery && $ticket->callback_requested) {
+                // Check both userquery_resolution_status and callback_request_resolution_status
+                if ($ticket->userquery_resolution_status && $ticket->callback_request_resolution_status) {
+                    $ticket->is_ticket_resolved = true;
+                    $ticket->ticket_resolved = Carbon::now(); // Set current timestamp
+                    $ticket->follow_up = null; // Set follow-up to null
+                    $ticket->save();
+
+                    return response()->json([
+                        "message" => "Ticket resolved successfully",
+                        "ticket_id" => $ticketId
+                    ], 200);
+                } else {
+                    return response()->json(["message" => "Either user query or callback request is not resolved yet"], 412);
+                }
+            }
+
+            // Default case if none of the above conditions are met
+            return response()->json(["message" => "No resolution criteria met"], 400);
+
+        } catch (\Exception $e) {
+            Log::error("Error: " . $e->getMessage());
+            return response()->json(["message" => "Internal server error"], 500);
+        }
+    }
+
+    public function getResolvedTicketCount()
+    {
+        try {
+            $resolvedTickets = getResolvedTicketCount::where('is_ticket_resolved', true)->count();
+
+            return response()->json([
+                "resolved_ticket_count" => $resolvedTickets
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error("Error: " . $e->getMessage());
+            return response()->json(["message" => "Internal server error"], 500);
+        }
+    }
+
+    public function getUnresolvedTicketCount()
+    {
+        try {
+            $unresolvedTickets = getUnresolvedTicketCount::where('is_ticket_resolved', false)->count();
+
+            return response()->json([
+                "unresolved_ticket_count" => $unresolvedTickets
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error("Error: " . $e->getMessage());
+            return response()->json(["message" => "Internal server error"], 500);
+        }
+    }
+
+    public function getTicketResolvedTime(Request $request)
+    {
+        $ticketId = $request->query('ticket_id'); // Get ticket_id from query parameters
+
+        if (!$ticketId) {
+            return response()->json(["message" => "Ticket ID is required"], 400);
+        }
+
+        $ticket = getTicketResolvedTime::where('ticket_id', $ticketId)->first();
+
+        if (!$ticket) {
+            return response()->json(["message" => "Ticket not found"], 404);
+        }
+
+        return response()->json([
+            "ticket_id" => $ticket->ticket_id,
+            "ticket_resolved" => $ticket->ticket_resolved
+        ], 200);
+    }
+
+    public function getConversationDuration(Request $request)
+    {
+        $userId = $request->query('user_id'); // Get user_id from query parameters
+
+        if (!$userId) {
+            return response()->json(["message" => "User ID is required"], 400);
+        }
+
+        $chatbotData = ChatbotData::where('user_id', $userId)->first();
+
+        if (!$chatbotData) {
+            return response()->json(["message" => "User data not found"], 404);
+        }
+
+        if (!$chatbotData->conv_started || !$chatbotData->conv_ended) {
+            return response()->json(["message" => "Conversation start or end time not set"], 400);
+        }
+
+        // Convert stored time values to Carbon instances
+        $convStarted = Carbon::parse($chatbotData->conv_started);
+        $convEnded = Carbon::parse($chatbotData->conv_ended);
+
+        // Calculate the duration
+        $durationSeconds = $convEnded->diffInSeconds($convStarted);
+        $durationFormatted = gmdate("H:i:s", $durationSeconds); // Format as HH:MM:SS
+
+        return response()->json([
+            "user_id" => $userId,
+            "conversation_duration" => $durationFormatted
+        ], 200);
+    }
+
+    public function saveRemarkAndFollowUp(Request $request)
+    {
+        try {
+            $ticketId = $request->input('ticket_id');
+            $remark = $request->input('remark');
+            $followUpDate = $request->input('follow_up_date'); // Optional
+
+            // Check if ticket exists
+            $ticket = saveRemarkAndFollowUp::where('ticket_id', $ticketId)->first();
+
+            if (!$ticket) {
+                return response()->json(["message" => "Ticket not found"], 404);
+            }
+
+            // Save remark if provided
+            if (!empty($remark)) {
+                $ticket->agent_remarks = $remark;
+            }
+
+            // Save follow-up date if provided
+            if (!empty($followUpDate)) {
+                // Parse follow-up date string to a proper date format
+                $parsedFollowUpDate = Carbon::createFromFormat('Y-m-d', $followUpDate)->toDateString();
+                $ticket->follow_up = $parsedFollowUpDate;
+            }
+
+            // Save changes
+            $ticket->save();
+
+            return response()->json(["message" => "Remark and Follow-up date saved successfully"], 200);
+
+        } catch (\Exception $e) {
+            Log::error("An error occurred: " . $e->getMessage());
+            return response()->json(["message" => "Internal server error"], 500);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public function getRemarks(Request $request)
+{
+    $ticket_id = $request->query('ticket_id');
+
+    if (!$ticket_id) {
+        return response()->json(["message" => "Ticket ID is required"], 400);
+    }
+
+    $ticket = getRemarks::where('ticket_id', $ticket_id)->first();
+
+    if (!$ticket) {
+        return response()->json(["message" => "Ticket not found"], 404);
+    }
+
+    return response()->json(["remarks" => $ticket->agent_remarks], 200);
+}
+
+
+public function getFollowUpTickets()
+    {
+        try {
+            // Fetch tickets where follow_up is NOT NULL
+            $tickets = getFollowUpTickets::whereNotNull('follow_up')->get();
+
+            if ($tickets->isEmpty()) {
+                return response()->json(["message" => "No tickets with follow-up requests found"], 404);
+            }
+
+            $ticketList = $tickets->map(function ($ticket) {
+                return [
+                    "ticket_id" => $ticket->ticket_id,
+                    "ticket_title" => $ticket->ticket_title,
+                    "updated" => $ticket->ticket_resolved ? $ticket->ticket_resolved->format("Y-m-d H:i:s") : null,
+                    "action" => $ticket->is_ticket_resolved ? "Resolved" : "Pending",
+                    "remark" => $ticket->agent_remarks ?? "No remark",
+                    "follow_up_date" => $ticket->follow_up ? $ticket->follow_up->format("Y-m-d") : null,
+                ];
+            });
+
+            return response()->json(["tickets" => $ticketList], 200);
+        } catch (\Exception $e) {
+            Log::error("Error fetching follow-up tickets: " . $e->getMessage());
+            return response()->json(["message" => "Internal server error"], 500);
+        }
+    }
+
+    public function updateTicketResolutionStatus(Request $request)
+    {
+        try {
+            $ticketId = $request->input('ticket_id');
+            $resolutionStatus = $request->input('resolution_status');
+
+            // Find the ticket
+            $ticket = updateTicketResolution::where('ticket_id', $ticketId)->first();
+
+            if (!$ticket) {
+                return response()->json(["message" => "Ticket not found"], 404);
+            }
+
+            // Update resolution status
+            $ticket->ticket_resolution_status = $resolutionStatus;
+            $ticket->save();
+
+            return response()->json([
+                "message" => "Ticket resolution status updated successfully",
+                "ticket_id" => $ticketId
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error("Error updating ticket resolution status: " . $e->getMessage());
+            return response()->json(["message" => "Internal server error"], 500);
+        }
+    }
+
+    public function getAllStatus()
+    {
+        $statuses = Status::select('description')->get();
+
+        if ($statuses->isEmpty()) {
+            return response()->json(['message' => 'No statuses found'], 404);
+        }
+
+        return response()->json(['statuses' => $statuses], 200);
     }
 
 }

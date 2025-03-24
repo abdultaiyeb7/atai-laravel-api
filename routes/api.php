@@ -47,3 +47,32 @@ Route::delete('/manage-user', [UserController::class, 'deleteUser']);
 
 
  Route::get('/tickets/starred_ticket_count', [TicketController::class, 'getStarredTicketCount']);
+
+ Route::post('/tickets/userquery_resolution_status', [TicketController::class, 'updateUserQueryResolutionStatus']);
+
+ Route::post('/tickets/callback_request_resolution_status', [TicketController::class, 'updateCallbackRequestResolutionStatus']);
+
+ Route::post('/tickets/resolve_ticket', [TicketController::class, 'resolveTicket']);
+
+ Route::get('/tickets/resolved_ticket_count', [TicketController::class, 'getResolvedTicketCount']);
+
+ Route::get('/tickets/unresolved_ticket_count', [TicketController::class, 'getUnresolvedTicketCount']);
+
+
+ Route::get('/tickets/ticket_resolved_time', [TicketController::class, 'getTicketResolvedTime']);
+
+
+ Route::get('/tickets/conversation_duration', [TicketController::class, 'getConversationDuration']);
+
+
+ Route::post('/tickets/save_remark_and_followup', [TicketController::class, 'saveRemarkAndFollowUp']);
+
+ Route::get('/tickets/get_remarks/{ticket_id}', [TicketController::class, 'getRemarks']);
+
+
+ Route::get('/tickets/follow_up_tickets', [TicketController::class, 'getFollowUpTickets']);
+
+ Route::post('/tickets/ticket_resolution_status', [TicketController::class, 'updateTicketResolutionStatus']);
+
+
+ Route::get('/status/get_descriptions', [TicketController::class, 'getAllStatus']);
