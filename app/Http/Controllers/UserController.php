@@ -13,82 +13,167 @@ class UserController extends Controller
     /**
      * Manage User (Insert/Update)
      */
+    // public function manageUser(Request $request)
+    // {
+    //     // Validate input
+    //     $validator = Validator::make($request->all(), [
+    //         'p_mobile' => 'required|digits:10',
+    //         'p_email' => 'nullable|email',
+    //         'p_user_name' => 'required|string|max:255',
+    //     ], [
+    //         'p_mobile.required' => 'Mobile number is required.',
+    //         'p_mobile.digits' => 'Mobile number must be exactly 10 digits.',
+    //         'p_email.email' => 'Invalid email format.',
+    //         'p_user_name.required' => 'User name is required.',
+    //     ]);
+
+    //     // Return validation errors if any
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Validation failed!',
+    //             'errors' => $validator->errors()
+    //         ], 422);
+    //     }
+
+    //     $action = $request->input('p_action');
+    //     $userId = $request->input('p_user_id', 0);
+    //     $message = '';
+
+    //     try {
+    //         // Call the stored procedure
+    //         $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?)', [
+    //             $action,
+    //             $userId,
+    //             $request->input('p_user_name'),
+    //             $request->input('p_email'),
+    //             $request->input('p_mobile'),
+    //             $request->input('p_profile_pic'),
+    //             $request->input('p_status'),
+    //             $request->input('p_token'),
+    //             $request->input('p_otp'),
+    //             $request->input('p_is_verified'),
+    //             $request->input('p_is_available'),
+    //             $request->input('P_pannumber'),
+    //             $request->input('p_DocPath'),
+    //             $request->input('p_role_abbreviation'),
+    //             $request->input('p_ClientId'),
+    //         ]);
+
+    //         // Fetch stored procedure message
+    //         $messageResult = DB::select('SELECT @message as message');
+    //         $message = $messageResult[0]->message ?? 'Operation completed successfully.';
+
+    //         // Send email notification if email is provided
+    //         if (!empty($request->input('p_email'))) {
+    //             $emailData = [
+    //                 'name' => $request->input('p_user_name'),
+    //                 'subject' => 'User Account Notification',
+    //                 'message' => 'Dear ' . $request->input('p_user_name') . ', your account has been ' . 
+    //                     ($action === 'I' ? 'created' : 'updated') . ' successfully.',
+    //             ];
+
+    //             Mail::to($request->input('p_email'))->send(new SendMail($emailData));
+    //         }
+
+    //         return response()->json([
+    //             'status' => 'success',
+    //             'message' => $message,
+    //             'data' => $result
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Database error!',
+    //             'error_details' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
     public function manageUser(Request $request)
-    {
-        // Validate input
-        $validator = Validator::make($request->all(), [
-            'p_mobile' => 'required|digits:10',
-            'p_email' => 'nullable|email',
-            'p_user_name' => 'required|string|max:255',
-        ], [
-            'p_mobile.required' => 'Mobile number is required.',
-            'p_mobile.digits' => 'Mobile number must be exactly 10 digits.',
-            'p_email.email' => 'Invalid email format.',
-            'p_user_name.required' => 'User name is required.',
+{
+    // Validate input
+    $validator = Validator::make($request->all(), [
+        'p_mobile' => 'required|digits:10',
+        'p_email' => 'nullable|email',
+        'p_user_name' => 'required|string|max:255',
+    ], [
+        'p_mobile.required' => 'Mobile number is required.',
+        'p_mobile.digits' => 'Mobile number must be exactly 10 digits.',
+        'p_email.email' => 'Invalid email format.',
+        'p_user_name.required' => 'User name is required.',
+    ]);
+
+    // Return validation errors if any
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Validation failed!',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    $action = $request->input('p_action');
+    $userId = $request->input('p_user_id', 0);
+    $message = '';
+
+    try {
+        // Call the stored procedure
+        $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?)', [
+            $action,
+            $userId,
+            $request->input('p_user_name'),
+            $request->input('p_email'),
+            $request->input('p_mobile'),
+            $request->input('p_profile_pic'),
+            $request->input('p_status'),
+            $request->input('p_token'),
+            $request->input('p_otp'),
+            $request->input('p_is_verified'),
+            $request->input('p_is_available'),
+            $request->input('P_pannumber'),
+            $request->input('p_DocPath'),
+            $request->input('p_role_abbreviation'),
+            $request->input('p_ClientId'),
         ]);
 
-        // Return validation errors if any
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed!',
-                'errors' => $validator->errors()
-            ], 422);
+        // Fetch stored procedure message
+        $messageResult = DB::select('SELECT @message as message');
+        $message = $messageResult[0]->message ?? 'Operation completed successfully.';
+
+        // Send email notification if email is provided
+        if ($request->filled('p_email')) {
+            $verificationLink = url('/verify-email?email=' . urlencode($request->input('p_email')));
+
+            $emailData = [
+                'subject' => 'Verify Your Email for Agent Registration',
+                'name' => $request->input('p_user_name'),
+                'verification_link' => $verificationLink,
+                'message' => "Dear {$request->input('p_user_name')},<br><br>
+                    You have been added as an agent on ATai Chatbot. Please verify your email to complete the registration.<br>
+                    Click the link below to verify your email:<br>
+                    <a href='{$verificationLink}'>Verify Email</a><br><br>
+                    Best regards,<br>
+                    [Admin Name]"
+            ];
+
+            Mail::to($request->input('p_email'))->send(new SendMail($emailData));
         }
 
-        $action = $request->input('p_action');
-        $userId = $request->input('p_user_id', 0);
-        $message = '';
-
-        try {
-            // Call the stored procedure
-            $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?)', [
-                $action,
-                $userId,
-                $request->input('p_user_name'),
-                $request->input('p_email'),
-                $request->input('p_mobile'),
-                $request->input('p_profile_pic'),
-                $request->input('p_status'),
-                $request->input('p_token'),
-                $request->input('p_otp'),
-                $request->input('p_is_verified'),
-                $request->input('p_is_available'),
-                $request->input('P_pannumber'),
-                $request->input('p_DocPath'),
-                $request->input('p_role_abbreviation'),
-                $request->input('p_ClientId'),
-            ]);
-
-            // Fetch stored procedure message
-            $messageResult = DB::select('SELECT @message as message');
-            $message = $messageResult[0]->message ?? 'Operation completed successfully.';
-
-            // Send email notification if email is provided
-            if (!empty($request->input('p_email'))) {
-                $emailData = [
-                    'name' => $request->input('p_user_name'),
-                    'subject' => 'User Account Notification',
-                    'message' => 'Dear ' . $request->input('p_user_name') . ', your account has been ' . 
-                        ($action === 'I' ? 'created' : 'updated') . ' successfully.',
-                ];
-
-                Mail::to($request->input('p_email'))->send(new SendMail($emailData));
-            }
-
-            return response()->json([
-                'status' => 'success',
-                'message' => $message,
-                'data' => $result
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Database error!',
-                'error_details' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'status' => 'success',
+            'message' => $message,
+            'data' => $result
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Database error!',
+            'error_details' => $e->getMessage()
+        ], 500);
     }
+}
+
 
     /**
      * Update User

@@ -24,6 +24,14 @@ class SendMail extends Mailable
     /**
      * Build the message.
      */
+    // public function build()
+    // {
+    //     return $this->from(env('MAIL_FROM_ADDRESS'))
+    //                 ->subject($this->data['subject'])
+    //                 ->view('emails.sendMail')
+    //                 ->with('data', $this->data);
+    // }
+
     public function build()
     {
         return $this->from(env('MAIL_FROM_ADDRESS'))
@@ -31,4 +39,5 @@ class SendMail extends Mailable
                     ->view('emails.sendMail')
                     ->with('data', $this->data);
     }
+    
 }
