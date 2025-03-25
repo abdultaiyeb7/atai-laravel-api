@@ -127,7 +127,7 @@ class UserController extends Controller
             $request->input('p_mobile'),
             $request->input('p_profile_pic'),
             $request->input('p_status'),
-            $request->input('p_token'),
+            '', // Passing empty string instead of NULL for p_token
             $request->input('p_otp'),
             $request->input('p_is_verified'),
             $request->input('p_is_available'),
