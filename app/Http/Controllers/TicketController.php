@@ -462,7 +462,7 @@ class TicketController extends Controller
         $chatbotData = ChatbotData::where('user_id', $userId)->first();
 
         if (!$chatbotData) {
-            return response()->json(["message" => "User data not found"], 404);
+            // return response()->json(["message" => "User data not found"], 404);
         }
 
         if (!$chatbotData->conv_started || !$chatbotData->conv_ended) {
