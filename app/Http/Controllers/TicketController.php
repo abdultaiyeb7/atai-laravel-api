@@ -462,7 +462,7 @@ class TicketController extends Controller
         $chatbotData = ChatbotData::where('user_id', $userId)->first();
 
         if (!$chatbotData) {
-            // return response()->json(["message" => "User data not found"], 404);
+             return response()->json(["message" => "User data not found"], 404);
         }
 
         if (!$chatbotData->conv_started || !$chatbotData->conv_ended) {
@@ -532,7 +532,25 @@ class TicketController extends Controller
 
 
 
-    public function getRemarks(Request $request)
+//     public function getRemarks(Request $request)
+// {
+//     $ticket_id = $request->query('ticket_id');
+
+//     if (!$ticket_id) {
+//         return response()->json(["message" => "Ticket ID is required"], 400);
+//     }
+
+//     $ticket = getRemarks::where('ticket_id', $ticket_id)->first();
+
+//     if (!$ticket) {
+//         return response()->json(["message" => "Ticket not found"], 404);
+//     }
+
+//     return response()->json(["remarks" => $ticket->agent_remarks], 200);
+// }
+
+
+public function getRemarks(Request $request)
 {
     $ticket_id = $request->query('ticket_id');
 
@@ -546,8 +564,12 @@ class TicketController extends Controller
         return response()->json(["message" => "Ticket not found"], 404);
     }
 
-    return response()->json(["remarks" => $ticket->agent_remarks], 200);
+    return response()->json([
+        "remarks" => $ticket->agent_remarks,
+        "follow_up" => $ticket->follow_up, // Added follow_up
+    ], 200);
 }
+
 
 
 public function getFollowUpTickets()

@@ -67,7 +67,8 @@ Route::delete('/manage-user', [UserController::class, 'deleteUser']);
 
  Route::post('/tickets/save_remark_and_followup', [TicketController::class, 'saveRemarkAndFollowUp']);
 
- Route::get('/tickets/get_remarks/{ticket_id}', [TicketController::class, 'getRemarks']);
+// Route::get('/tickets/get_remarks', [TicketController::class, 'getRemarks']);
+Route::get('/tickets/get_remarks', [TicketController::class, 'getRemarks']);
 
 
  Route::get('/tickets/follow_up_tickets', [TicketController::class, 'getFollowUpTickets']);

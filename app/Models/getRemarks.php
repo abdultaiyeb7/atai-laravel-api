@@ -14,7 +14,7 @@ class getRemarks extends Model
     public $incrementing = false; // Disable auto-incrementing
     protected $keyType = 'string'; // Treat ticket_id as a string
 
-    protected $fillable = ['ticket_id', 'agent_remarks'];
+    protected $fillable = ['ticket_id', 'agent_remarks', 'follow_up']; // Added follow_up
 
     public $timestamps = false; // Disable timestamps if they don't exist in the table
 }
