@@ -7,6 +7,9 @@ use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TicketController;
 
+use App\Http\Controllers\chatbot\ChatbotController;
+
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -77,3 +80,12 @@ Route::get('/tickets/get_remarks', [TicketController::class, 'getRemarks']);
 
 
  Route::get('/status/get_descriptions', [TicketController::class, 'getAllStatus']);
+
+
+
+
+
+ Route::post('/chatbot/init_recording_conversation/', [ChatbotController::class, 'initRecordingConversation']);
+
+
+ Route::post('/chatbot/submit_callback_preference', [ChatbotController::class, 'submitCallbackPreference']);
