@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\UserConvJourneydataapi;
 use App\Models\ChatbotDataapi;
-
+use App\Models\submitSatisfaction;
 
 use Exception;
 use Illuminate\Database\QueryException;
@@ -228,4 +228,52 @@ class ChatbotControllerapi extends Controller
     {
         // Implement logic to save conversation history
     }
+
+    public function submitSatisfaction(Request $request)
+    {
+        // Validate the incoming request data
+        $validatedData = $request->validate([
+            'user_id' => 'required|string|max:255',
+            'message' => 'required|numeric|between:0,5'
+        ], [
+            'user_id.required' => 'User ID is required.',
+            'message.required' => 'Satisfaction level is required.',
+            'message.numeric' => 'Satisfaction level must be a number.',
+            'message.between' => 'Satisfaction level should be between 0 and 5.'
+        ]);
+
+        $userId = $validatedData['user_id'];
+        $satisfactionLevel = $validatedData['message'];
+
+        // Retrieve the user data from the database
+        $user = submitSatisfaction::where('user_id', $userId)->first();
+
+        if (!$user) {
+            Log::warning("User {$userId} not found.");
+            return response()->json(["message" => "User not found. Please start a new session."], 404);
+        }
+
+        try {
+            // Update the user's satisfaction level
+            $user->satisfaction_level = $satisfactionLevel;
+            $user->save();
+
+            // Optionally, append to conversation logs if such a method exists
+            // $this->appendToConversation($userId, "User", $satisfactionLevel);
+            // $this->appendToConversation($userId, "Chatbot", "Thank you for your feedback!");
+
+            Log::info("User {$userId} provided satisfaction level: {$satisfactionLevel}");
+
+            return response()->json(["message" => "Thank you for your feedback!"], 200);
+        } catch (\Exception $e) {
+            Log::error("An error occurred while saving satisfaction level for user {$userId}: {$e->getMessage()}");
+            return response()->json(["message" => "An error occurred. Please try again."], 500);
+        }
+    }
+
+    // Example method to append to conversation logs
+    // protected function appendToConversation($userId, $sender, $message)
+    // {
+    //     // Implement your conversation logging logic here
+    // }
 }
