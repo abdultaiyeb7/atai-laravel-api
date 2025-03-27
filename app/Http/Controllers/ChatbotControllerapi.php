@@ -70,7 +70,7 @@ class ChatbotControllerapi extends Controller
         }
     }
 
-    public function submitCallbackPreference(Request $request)
+    public function submitCallbackPreference_atai(Request $request)
     {
         try {
             // Validate request
