@@ -92,3 +92,9 @@ Route::get('/tickets/get_remarks', [TicketController::class, 'getRemarks']);
 
 
  Route::post('/chatbot/submit_details', [ChatbotControllerapi::class, 'submitDetails']);
+
+
+
+
+ 
+ Route::get('/tickets/get_all_tickets_info_api', [TicketController::class, 'getAllTicketsInfoapi']);

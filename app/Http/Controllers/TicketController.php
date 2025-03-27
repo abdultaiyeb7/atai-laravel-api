@@ -76,6 +76,50 @@ class TicketController extends Controller
         }
     }
 
+    public function getAllTicketsInfoapi(Request $request)
+    {
+        try {
+            Log::info("Fetching all tickets information.");
+
+            // Fetch all tickets
+            $tickets = TicketsData::all();
+            $tickets_info = [];
+
+            // Define IST timezone
+            $ist = new DateTimeZone('Asia/Kolkata');
+
+            foreach ($tickets as $ticket) {
+                Log::info("Processing ticket_id: " . $ticket->ticket_id);
+
+                // Fetch the correct ticket title from the database
+                $ticket_title = $this->getTicketTitle($ticket->ticket_id);
+                Log::info("Ticket title fetched: " . $ticket_title);
+
+                // Determine resolved time
+                $resolved_time = $ticket->ticket_resolved ?: $ticket->ticket_created;
+                $status = $ticket->ticket_resolution_status ?: "Pending";
+                
+                // Convert to IST
+                $resolved_time_ist = Carbon::parse($resolved_time)->setTimezone($ist)->format('Y-m-d H:i:s');
+                Log::info("Resolved time in IST: " . $resolved_time_ist);
+
+                // Append to response
+                $tickets_info[] = [
+                    "ticket_id" => $ticket->ticket_id,
+                    "ticket_title" => $ticket_title,
+                    "updated" => $resolved_time_ist,
+                    "status" => $status,
+                    "agent_remarks" => $ticket->agent_remarks, // Ensure this field exists
+                ];
+            }
+
+            return response()->json($tickets_info, 200);
+        } catch (\Exception $e) {
+            Log::error("An error occurred: " . $e->getMessage());
+            return response()->json(["message" => "An error occurred while retrieving tickets information"], 500);
+        }
+    }
+
     private function getTicketTitle($ticketId)
     {
         // Fetch the ticket title from the database based on ticket_id
