@@ -121,8 +121,7 @@ class ChatbotControllerapi extends Controller
     //         ], 500);
     //     }
     // }
-
-    public function submitCallbackPreference(Request $request)
+    public function submitCallbackPreference_atai(Request $request)
 {
     try {
         // Validate request
@@ -135,43 +134,35 @@ class ChatbotControllerapi extends Controller
             'message.in' => 'Message must be either Yes or No.'
         ]);
 
-        // Extract validated data
-        $userId = $validatedData['user_id'];
-        $userResponse = $validatedData['message'];
-
-        // Fetch user from the database
-        $user = ChatbotDataapi::where('user_id', $userId)->first();
+        $user = ChatbotDataapi::where('user_id', $validatedData['user_id'])->first();
 
         if (!$user) {
-            return response()->json([
-                "message" => "User not found. Please start a new session."
-            ], 404);
+            return response()->json(["message" => "User not found. Please start a new session."], 404);
         }
 
-        if ($userResponse === "Yes") {
+        if ($validatedData['message'] === "Yes") {
             // Update callback request
             $user->update(['callback_requested' => true]);
 
             return response()->json([
-                "message" => "Kindly provide your details to help us provide you the best service:",
+                "message" => "Kindly provide your details to help us serve you better:",
                 "details" => [
                     "name" => $user->name,
                     "email" => $user->email,
                     "contact" => $user->contact,
-                    "session_level" => $user->session_level // Show actual session level
+                    "session_level" => $user->session_level
                 ]
             ]);
         }
-        
-        // If user says "No", just thank them
-        return response()->json([
-            "message" => "Thank you for visiting us."
-        ], 200);
+
+        return response()->json(["message" => "Thank you for visiting us."], 200);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json(["message" => $e->getMessage()], 422);
     } catch (\Exception $e) {
         Log::error("Error in submitCallbackPreference_atai: " . $e->getMessage());
-
         return response()->json([
-            "message" => "An error occurred. Please try again later."
+            "message" => "An unexpected error occurred. Please try again.",
         ], 500);
     }
 }
