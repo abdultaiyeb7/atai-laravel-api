@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Models\ChatbotAI;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 
 
-class UserConvJourney extends Model
+class UserConvJourneydataapi extends Model
 {
     use HasFactory;
 

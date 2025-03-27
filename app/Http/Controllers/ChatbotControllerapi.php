@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\chatbot;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\ChatbotAI\UserConvJourney;
-use App\Models\ChatbotAI\ChatbotData;
+use App\Models\UserConvJourneydataapi;
+use App\Models\ChatbotDataapi;
 
 
 use Exception;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 
 
-class ChatbotController extends Controller
+class ChatbotControllerapi extends Controller
 {
     public function initRecordingConversation(Request $request)
     {
@@ -34,7 +34,7 @@ class ChatbotController extends Controller
             Log::info("Received user_id: " . $userId); // Debugging log
 
             // Check if the conversation journey exists
-            $existingUser = UserConvJourney::where('user_conv_journey_id', $userId)->first();
+            $existingUser = UserConvJourneydataapi::where('user_conv_journey_id', $userId)->first();
             
             if (!$existingUser) {
                 // Manually insert the data and check if it's inserted
@@ -87,7 +87,7 @@ class ChatbotController extends Controller
             $userResponse = $validatedData['message'];
 
             // Fetch user from the database
-            $user = ChatbotData::where('user_id', $userId)->first();
+            $user = ChatbotDataapi::where('user_id', $userId)->first();
 
             if (!$user) {
                 return response()->json(["message" => "User not found. Please start a new session."], 404);
@@ -129,7 +129,7 @@ class ChatbotController extends Controller
         $userResponse = $data['message'] ?? null;
         $userQuery = $data['user_query'] ?? null;
 
-        $userData = ChatbotData::where('user_id', $userId)->first();
+        $userData = ChatbotDataapi::where('user_id', $userId)->first();
 
         if (!$userData) {
             Log::info("User $userId not found");

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Models\ChatbotAI;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class ChatbotData extends Model
+class ChatbotDataapi extends Model
 {
     use HasFactory;
 

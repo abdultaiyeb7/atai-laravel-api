@@ -7,7 +7,7 @@ use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TicketController;
 
-use App\Http\Controllers\chatbot\ChatbotController;
+use App\Http\Controllers\ChatbotControllerapi;
 
 
 
@@ -85,10 +85,10 @@ Route::get('/tickets/get_remarks', [TicketController::class, 'getRemarks']);
 
 
 
- Route::post('/chatbot/init_recording_conversation/', [ChatbotController::class, 'initRecordingConversation']);
+ Route::post('/chatbot/init_recording_conversation/', [ChatbotControllerapi::class, 'initRecordingConversation']);
 
 
- Route::post('/chatbot/submit_callback_preference', [ChatbotController::class, 'submitCallbackPreference']);
+ Route::post('/chatbot/submit_callback_preference', [ChatbotControllerapi::class, 'submitCallbackPreference']);
 
 
- Route::post('/chatbot/submit_details', [ChatbotController::class, 'submitDetails']);
+ Route::post('/chatbot/submit_details', [ChatbotControllerapi::class, 'submitDetails']);
