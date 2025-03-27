@@ -88,7 +88,7 @@ Route::get('/tickets/get_remarks', [TicketController::class, 'getRemarks']);
  Route::post('/chatbota/init_recording_conversation/', [ChatbotControllerapi::class, 'initRecordingConversation']);
 
 
- Route::post('/chatbot_atai/submit_callback_preference', [ChatbotControllerapi::class, 'submitCallbackPreference_atai']);
+ Route::post('/chatbot/submit_callback_preference', [ChatbotControllerapi::class, 'submitCallbackPreference_atai']);
 
 
  Route::post('/chatbot_atai/submit_details', [ChatbotControllerapi::class, 'submitDetails']);
