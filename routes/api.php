@@ -95,6 +95,6 @@ Route::get('/tickets/get_remarks', [TicketController::class, 'getRemarks']);
 
  Route::post('/submit_satisfaction', [ChatbotControllerapi::class, 'submitSatisfaction']);
 
+ Route::post('/terminate', [ChatbotControllerapi::class, 'terminateChat']);
 
-
- 
+ Route::post('/terminate_response', [ChatbotControllerapi::class, 'terminateResponse']);

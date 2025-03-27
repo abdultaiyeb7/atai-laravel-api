@@ -15,4 +15,6 @@ class UserConvJourney extends Model
         'user_conv_journey_id',
         'user_conversation'
     ];
+
+    public $timestamps = false;
 }

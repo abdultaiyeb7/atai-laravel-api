@@ -7,11 +7,15 @@ use Illuminate\Http\Request;
 use App\Models\UserConvJourneydataapi;
 use App\Models\ChatbotDataapi;
 use App\Models\submitSatisfaction;
+use App\Models\terminateChat;
+use App\Models\terminateResponse;
+use App\Models\terminatTicketsData;
 
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 
 
@@ -276,4 +280,130 @@ class ChatbotControllerapi extends Controller
     // {
     //     // Implement your conversation logging logic here
     // }
+
+    public function terminateChat(Request $request)
+    {
+        // Validate the incoming request data
+        $validatedData = $request->validate([
+            'user_id' => 'required|string|max:255',
+        ], [
+            'user_id.required' => 'User ID is required.',
+        ]);
+
+        $userId = $validatedData['user_id'];
+
+        // Retrieve the user data from the database
+        $user = terminateChat::where('user_id', $userId)->first();
+
+        if ($user) {
+            Log::info("User {$userId} requested to terminate the chat at level {$user->session_level}");
+
+            // Append to conversation logs if such a method exists
+            $this->appendToConversation($userId, "User", "I want to end this conversation");
+            $this->appendToConversation($userId, "Chatbot", "Why are you leaving so soon? Tell our representatives how we can be of help. (Yes/No)");
+
+            return response()->json([
+                "message" => "Why are you leaving so soon? Tell our representatives how we can be of help. (Yes/No)"
+            ], 200);
+        } else {
+            Log::warning("User {$userId} not found.");
+            return response()->json([
+                "message" => "User not found. Please start a new session."
+            ], 404);
+        }
+    }
+
+    // Example method to append to conversation logs
+   
+    public function terminateResponse(Request $request)
+    {
+        // Validate incoming request data
+        $validatedData = $request->validate([
+            'user_id' => 'required|string|max:255',
+            'response' => 'required|string|max:1',
+        ]);
+
+        $userId = $validatedData['user_id'];
+        $response = strtoupper($validatedData['response']);
+
+        // Retrieve user data and conversation journey from the database
+        $userData = terminateResponse::where('user_id', $userId)->first();
+        $convJourney = UserConvJourneydataapi::where('user_conv_journey_id', $userId)->first();
+
+        if ($userData && $convJourney) {
+            if ($response === 'Y') {
+                $this->appendToConversation($userId, 'User', $response);
+                $this->appendToConversation($userId, 'Chatbot', 'Please wait while we reconnect you...');
+                return response()->json([
+                    'message' => 'Please wait while we reconnect you...'
+                ]);
+            } elseif ($response === 'N') {
+                $this->appendToConversation($userId, 'User', $response);
+
+                if ($userData->callback_requested || $userData->userquery) {
+                    // Create a new ticket
+                    $newTicket = terminatTicketsData::create([
+                        'ticket_id' => $userId,
+                        'user_id' => $userId,
+                        'user_name' => $userData->name,
+                        'contact' => $userData->contact,
+                        'email' => $userData->email,
+                        'callback_requested' => $userData->callback_requested,
+                        'userquery' => $userData->userquery,
+                        'user_conv_journey_id' => $userId,
+                        'is_ticket_resolved' => false,
+                        'ticket_starred' => false,
+                    ]);
+
+                    // Mark the conversation as terminated
+                    $userData->is_terminated = true;
+                    $userData->save();
+
+                    $this->appendToConversation($userId, 'Chatbot', 'Thank you for using our service. Have a great day!');
+
+                    // Send an email with the conversation details
+                    // $this->sendConversationEmail($userData, $convJourney);
+
+                    return response()->json([
+                        'message' => 'Thank you for using our service. Have a great day!',
+                        'ticket_id' => $userId
+                    ]);
+                } else {
+                    $this->appendToConversation($userId, 'Chatbot', 'Thank you for using our service. Have a great day!');
+                    $userData->is_terminated = true;
+                    $userData->save();
+                    return response()->json([
+                        'message' => 'Thank you for using our service. Have a great day!'
+                    ]);
+                }
+            }
+        }
+
+        return response()->json([
+            'message' => 'Invalid response or no session to continue.'
+        ], 400);
+    }
+
+   
+    // protected function sendConversationEmail($userData, $convJourney)
+    // {
+    //     $receiverEmail = 'suyashbaoney09041998@gmail.com';
+    //     $subject = "User {$userData->name} conversation with ATai Chatbot";
+    //     $message = $this->cleanConversation($convJourney->user_conversation);
+
+    //     Mail::raw($message, function ($mail) use ($receiverEmail, $subject) {
+    //         $mail->from('suyashbaoney58@gmail.com', 'ATai Chatbot');
+    //         $mail->to($receiverEmail);
+    //         $mail->subject($subject);
+    //     });
+
+    //     Log::info("Email has been sent to {$receiverEmail}");
+    // }
+
+    protected function cleanConversation($conversation)
+    {
+        // Implement your conversation cleaning logic here
+        return $conversation;
+    }
+
 }
