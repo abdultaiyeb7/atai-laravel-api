@@ -88,10 +88,11 @@ Route::get('/tickets/get_remarks', [TicketController::class, 'getRemarks']);
  Route::post('/chatbot/init_recording_conversation/', [ChatbotControllerapi::class, 'initRecordingConversation']);
 
 
- Route::post('/chatbot/submit_callback_preference', [ChatbotControllerapi::class, 'submitCallbackPreference_atai']);
+//  Route::post('/chatbot/submit_callback_preference', [ChatbotControllerapi::class, 'submitCallbackPreference_atai']);
+Route::post('/submit_callback_preference', [ChatbotControllerapi::class, 'submitCallbackPreference']);
 
 
- Route::post('/chatbot_atai/submit_details', [ChatbotControllerapi::class, 'submitDetails']);
+//  Route::post('/chatbot_atai/submit_details', [ChatbotControllerapi::class, 'submitDetails']);
 
  Route::post('/submit_satisfaction', [ChatbotControllerapi::class, 'submitSatisfaction']);
 

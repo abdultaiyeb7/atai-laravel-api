@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\UserConvJourneydataapi;
-use App\Models\ChatbotDataapi;
+use App\Models\submitCallbackPreference;
 use App\Models\submitSatisfaction;
 use App\Models\terminateChat;
 use App\Models\terminateResponse;
@@ -125,113 +125,113 @@ class ChatbotControllerapi extends Controller
     //         ], 500);
     //     }
     // }
-    public function submitCallbackPreference_atai(Request $request)
-{
-    try {
-        // Validate request
-        $validatedData = $request->validate([
-            'user_id' => 'required|string|max:255',
-            'message' => 'required|string|in:Yes,No'
-        ], [
-            'user_id.required' => 'User ID is required.',
-            'message.required' => 'Message is required.',
-            'message.in' => 'Message must be either Yes or No.'
-        ]);
+//     public function submitCallbackPreference_atai(Request $request)
+// {
+//     try {
+//         // Validate request
+//         $validatedData = $request->validate([
+//             'user_id' => 'required|string|max:255',
+//             'message' => 'required|string|in:Yes,No'
+//         ], [
+//             'user_id.required' => 'User ID is required.',
+//             'message.required' => 'Message is required.',
+//             'message.in' => 'Message must be either Yes or No.'
+//         ]);
 
-        $user = ChatbotDataapi::where('user_id', $validatedData['user_id'])->first();
+//         $user = ChatbotDataapi::where('user_id', $validatedData['user_id'])->first();
 
-        if (!$user) {
-            return response()->json(["message" => "User not found. Please start a new session."], 404);
-        }
+//         if (!$user) {
+//             return response()->json(["message" => "User not found. Please start a new session."], 404);
+//         }
 
-        if ($validatedData['message'] === "Yes") {
-            // Update callback request
-            $user->update(['callback_requested' => true]);
+//         if ($validatedData['message'] === "Yes") {
+//             // Update callback request
+//             $user->update(['callback_requested' => true]);
 
-            return response()->json([
-                "message" => "Kindly provide your details to help us serve you better:",
-                "details" => [
-                    "name" => $user->name,
-                    "email" => $user->email,
-                    "contact" => $user->contact,
-                    "session_level" => $user->session_level
-                ]
-            ]);
-        }
+//             return response()->json([
+//                 "message" => "Kindly provide your details to help us serve you better:",
+//                 "details" => [
+//                     "name" => $user->name,
+//                     "email" => $user->email,
+//                     "contact" => $user->contact,
+//                     "session_level" => $user->session_level
+//                 ]
+//             ]);
+//         }
 
-        return response()->json(["message" => "Thank you for visiting us."], 200);
+//         return response()->json(["message" => "Thank you for visiting us."], 200);
 
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        return response()->json(["message" => $e->getMessage()], 422);
-    } catch (\Exception $e) {
-        Log::error("Error in submitCallbackPreference_atai: " . $e->getMessage());
-        return response()->json([
-            "message" => "An unexpected error occurred. Please try again.",
-        ], 500);
-    }
-}
+//     } catch (\Illuminate\Validation\ValidationException $e) {
+//         return response()->json(["message" => $e->getMessage()], 422);
+//     } catch (\Exception $e) {
+//         Log::error("Error in submitCallbackPreference_atai: " . $e->getMessage());
+//         return response()->json([
+//             "message" => "An unexpected error occurred. Please try again.",
+//         ], 500);
+//     }
+// }
 
 
-    public function submitDetails(Request $request)
-    {
-        $data = $request->json()->all();
-        $userId = $data['user_id'] ?? null;
-        $userResponse = $data['message'] ?? null;
-        $userQuery = $data['user_query'] ?? null;
+//     public function submitDetails(Request $request)
+//     {
+//         $data = $request->json()->all();
+//         $userId = $data['user_id'] ?? null;
+//         $userResponse = $data['message'] ?? null;
+//         $userQuery = $data['user_query'] ?? null;
 
-        $userData = ChatbotDataapi::where('user_id', $userId)->first();
+//         $userData = ChatbotDataapi::where('user_id', $userId)->first();
 
-        if (!$userData) {
-            Log::info("User $userId not found");
-            return response()->json(["message" => "User not found. Please start a new session."]);
-        }
+//         if (!$userData) {
+//             Log::info("User $userId not found");
+//             return response()->json(["message" => "User not found. Please start a new session."]);
+//         }
 
-        if ($userResponse) {
-            try {
-                $details = explode(',', $userResponse);
-                if (count($details) < 3) {
-                    throw new \Exception("Invalid format");
-                }
+//         if ($userResponse) {
+//             try {
+//                 $details = explode(',', $userResponse);
+//                 if (count($details) < 3) {
+//                     throw new \Exception("Invalid format");
+//                 }
 
-                $userData->name = trim($details[0]);
-                $userData->contact = trim($details[1] ?? '');
-                $userData->email = trim($details[2] ?? '');
-                $userData->session_level = 6;
-                $userData->save();
+//                 $userData->name = trim($details[0]);
+//                 $userData->contact = trim($details[1] ?? '');
+//                 $userData->email = trim($details[2] ?? '');
+//                 $userData->session_level = 6;
+//                 $userData->save();
 
-                $this->appendToConversation($userId, "User", "Details provided: $userResponse");
-                Log::info("User $userId provided details and moved to level 6");
+//                 $this->appendToConversation($userId, "User", "Details provided: $userResponse");
+//                 Log::info("User $userId provided details and moved to level 6");
 
-                if ($userQuery) {
-                    $userData->userquery = trim($userQuery);
-                    $userData->save();
-                    $this->appendToConversation($userId, "User", "Query: $userQuery");
+//                 if ($userQuery) {
+//                     $userData->userquery = trim($userQuery);
+//                     $userData->save();
+//                     $this->appendToConversation($userId, "User", "Query: $userQuery");
 
-                    $apiResponse = "Your details have been saved and your query has been registered. Please give us a rating:";
-                    $this->appendToConversation($userId, "Chatbot", $apiResponse);
-                    Log::info("User $userId query saved: $userQuery");
+//                     $apiResponse = "Your details have been saved and your query has been registered. Please give us a rating:";
+//                     $this->appendToConversation($userId, "Chatbot", $apiResponse);
+//                     Log::info("User $userId query saved: $userQuery");
 
-                    return response()->json(["message" => $apiResponse]); // ✅ Only returning the message
-                }
+//                     return response()->json(["message" => $apiResponse]); // ✅ Only returning the message
+//                 }
 
-                $apiResponse = "Our representatives will reach out to you. Please give us a rating:";
-                $this->appendToConversation($userId, "Chatbot", $apiResponse);
-                return response()->json(["message" => $apiResponse]); // ✅ Only returning the message
+//                 $apiResponse = "Our representatives will reach out to you. Please give us a rating:";
+//                 $this->appendToConversation($userId, "Chatbot", $apiResponse);
+//                 return response()->json(["message" => $apiResponse]); // ✅ Only returning the message
 
-            } catch (\Exception $e) {
-                $errorMessage = "Please provide your details in the format: name, contact, email";
-                $this->appendToConversation($userId, "Chatbot", $errorMessage);
-                return response()->json(["message" => $errorMessage]);
-            }
-        }
+//             } catch (\Exception $e) {
+//                 $errorMessage = "Please provide your details in the format: name, contact, email";
+//                 $this->appendToConversation($userId, "Chatbot", $errorMessage);
+//                 return response()->json(["message" => $errorMessage]);
+//             }
+//         }
 
-        return response()->json(["message" => "No response provided"]);
-    }
+//         return response()->json(["message" => "No response provided"]);
+//     }
 
-    private function appendToConversation($userId, $sender, $message)
-    {
-        // Implement logic to save conversation history
-    }
+//     private function appendToConversation($userId, $sender, $message)
+//     {
+//         // Implement logic to save conversation history
+//     }
 
     public function submitSatisfaction(Request $request)
     {
@@ -406,4 +406,55 @@ class ChatbotControllerapi extends Controller
         return $conversation;
     }
 
+
+    public function submitCallbackPreference(Request $request)
+    {
+        $userId = $request->input('user_id');
+        $userResponse = $request->input('message');
+
+        // Fetch user data
+        $userData = submitCallbackPreference::where('user_id', $userId)->first();
+
+        if (!$userData) {
+            Log::error("User {$userId} not found");
+            return response()->json(["message" => "User not found. Please start a new session."], 404);
+        }
+
+        if ($userResponse) {
+            try {
+                DB::beginTransaction();
+
+                if ($userResponse === "Yes") {
+                    $userData->callback_requested = true;
+                } elseif ($userResponse === "No") {
+                    $userData->callback_requested = false;
+                }
+
+                $userData->session_level = 7;
+                $userData->save();
+
+                // Append conversation log
+                $this->appendToConversation($userId, "User", $userResponse);
+                $this->appendToConversation($userId, "Chatbot", "Our representatives will reach out to you. Please give us a rating:");
+
+                DB::commit();
+                Log::info("User {$userId} provided callback preference and moved to level 7");
+
+                return response()->json(["message" => "Our representatives will reach out to you. Please give us a rating:"]);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("An error occurred: " . $e->getMessage());
+                return response()->json(["message" => "An error occurred. Please try again."], 500);
+            }
+        }
+
+        return response()->json(["message" => "Invalid request."], 400);
+    }
+
+    private function appendToConversation($userId, $sender, $message)
+    {
+        // Assuming there's a conversation logging mechanism
+        Log::info("[$sender] User {$userId}: {$message}");
+    }
 }
