@@ -121,4 +121,65 @@ class ChatbotController extends Controller
             ], 500);
         }
     }
+
+    public function submitDetails(Request $request)
+    {
+        $data = $request->json()->all();
+        $userId = $data['user_id'] ?? null;
+        $userResponse = $data['message'] ?? null;
+        $userQuery = $data['user_query'] ?? null;
+
+        $userData = ChatbotData::where('user_id', $userId)->first();
+
+        if (!$userData) {
+            Log::info("User $userId not found");
+            return response()->json(["message" => "User not found. Please start a new session."]);
+        }
+
+        if ($userResponse) {
+            try {
+                $details = explode(',', $userResponse);
+                if (count($details) < 3) {
+                    throw new \Exception("Invalid format");
+                }
+
+                $userData->name = trim($details[0]);
+                $userData->contact = trim($details[1] ?? '');
+                $userData->email = trim($details[2] ?? '');
+                $userData->session_level = 6;
+                $userData->save();
+
+                $this->appendToConversation($userId, "User", "Details provided: $userResponse");
+                Log::info("User $userId provided details and moved to level 6");
+
+                if ($userQuery) {
+                    $userData->userquery = trim($userQuery);
+                    $userData->save();
+                    $this->appendToConversation($userId, "User", "Query: $userQuery");
+
+                    $apiResponse = "Your details have been saved and your query has been registered. Please give us a rating:";
+                    $this->appendToConversation($userId, "Chatbot", $apiResponse);
+                    Log::info("User $userId query saved: $userQuery");
+
+                    return response()->json(["message" => $apiResponse]); // ✅ Only returning the message
+                }
+
+                $apiResponse = "Our representatives will reach out to you. Please give us a rating:";
+                $this->appendToConversation($userId, "Chatbot", $apiResponse);
+                return response()->json(["message" => $apiResponse]); // ✅ Only returning the message
+
+            } catch (\Exception $e) {
+                $errorMessage = "Please provide your details in the format: name, contact, email";
+                $this->appendToConversation($userId, "Chatbot", $errorMessage);
+                return response()->json(["message" => $errorMessage]);
+            }
+        }
+
+        return response()->json(["message" => "No response provided"]);
+    }
+
+    private function appendToConversation($userId, $sender, $message)
+    {
+        // Implement logic to save conversation history
+    }
 }
