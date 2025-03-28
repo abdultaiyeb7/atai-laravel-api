@@ -387,47 +387,51 @@ class ChatbotControllerapi extends Controller
     {
         $userId = $request->input('user_id');
         $userResponse = $request->input('message');
-
+    
         // Fetch user data
         $userData = submitCallbackPreference::where('user_id', $userId)->first();
-
+    
         if (!$userData) {
             Log::error("User {$userId} not found");
             return response()->json(["message" => "User not found. Please start a new session."], 404);
         }
-
+    
         if ($userResponse) {
             try {
                 DB::beginTransaction();
-
+    
+                $responseMessage = "";
+    
                 if ($userResponse === "Yes") {
                     $userData->callback_requested = true;
+                    $responseMessage = "Our representatives will reach out to you. Please give us details.";
                 } elseif ($userResponse === "No") {
                     $userData->callback_requested = false;
+                    $responseMessage = "Thank you for using our services.";
                 }
-
+    
                 $userData->session_level = 7;
                 $userData->save();
-
+    
                 // Append conversation log
                 $this->appendToConversation($userId, "User", $userResponse);
-                $this->appendToConversation($userId, "Chatbot", "Our representatives will reach out to you. Please give us a details:");
-
+                $this->appendToConversation($userId, "Chatbot", $responseMessage);
+    
                 DB::commit();
                 Log::info("User {$userId} provided callback preference and moved to level 7");
-
-                return response()->json(["message" => "Thank You !:"]);
-
+    
+                return response()->json(["message" => $responseMessage]);
+    
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error("An error occurred: " . $e->getMessage());
                 return response()->json(["message" => "An error occurred. Please try again."], 500);
             }
         }
-
+    
         return response()->json(["message" => "Invalid request."], 400);
     }
-
+    
     private function appendToConversation($userId, $sender, $message)
     {
         // Assuming there's a conversation logging mechanism
