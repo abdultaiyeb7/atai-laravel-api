@@ -3,10 +3,19 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 
 class terminatTicketsData extends Model
 {
-    protected $table = 'tickets_data'; // Replace with your actual table name
+    use HasFactory;
+
+    protected $table = 'tickets_data'; // Set your actual table name
+
+    protected $primaryKey = 'ticket_id'; // Define primary key
+
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
         'ticket_id',
@@ -19,8 +28,8 @@ class terminatTicketsData extends Model
         'user_conv_journey_id',
         'is_ticket_resolved',
         'ticket_starred',
-        // Add other fillable fields as needed
+        'ticket_resolution_status'
     ];
 
-    public $timestamps = true; // Assuming you have 'created_at' and 'updated_at' columns
+    public $timestamps = false;
 }
