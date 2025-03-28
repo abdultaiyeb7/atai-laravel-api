@@ -10,6 +10,8 @@ use App\Models\submitSatisfaction;
 use App\Models\terminateChat;
 use App\Models\terminateResponse;
 use App\Models\terminatTicketsData;
+use App\Models\submitDetails;
+
 
 use Exception;
 use Illuminate\Database\QueryException;
@@ -457,4 +459,73 @@ class ChatbotControllerapi extends Controller
         // Assuming there's a conversation logging mechanism
         Log::info("[$sender] User {$userId}: {$message}");
     }
+
+    public function submitDetails(Request $request)
+    {
+        $userId = $request->input('user_id');
+        $userResponse = $request->input('message');
+        $userQuery = $request->input('user_query', null); // Optional
+
+        // Find user
+        $userData = submitDetails::where('user_id', $userId)->first();
+        if (!$userData) {
+            Log::error("User {$userId} not found");
+            return response()->json(["message" => "User not found. Please start a new session."], 404);
+        }
+
+        if ($userResponse) {
+            try {
+                DB::beginTransaction();
+
+                // Split the response
+                $details = explode(',', $userResponse);
+                if (count($details) < 3) {
+                    throw new \Exception("Invalid format");
+                }
+
+                $userData->name = trim($details[0]);
+                $userData->contact = isset($details[1]) ? trim($details[1]) : '';
+                $userData->email = isset($details[2]) ? trim($details[2]) : '';
+                $userData->session_level = 6;
+
+                // Log conversation
+                $this->appendToConversation($userId, "User", "Details provided: {$userResponse}");
+                Log::info("User {$userId} provided details and moved to level 6");
+
+                // Determine response message
+                if ($userQuery) {
+                    $userData->userquery = trim($userQuery);
+                    $this->appendToConversation($userId, "User", "Query: {$userQuery}");
+                    Log::info("User {$userId} query saved: {$userQuery}");
+                    $message = "Your details have been saved and your query has been registered. Please give us a rating:";
+                } else {
+                    $message = "Our representatives will reach out to you. Please give us a rating:";
+                }
+
+                $userData->save();
+                DB::commit();
+
+                $this->appendToConversation($userId, "Chatbot", $message);
+
+                return response()->json([
+                    "message" => $message
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("Error processing user details: " . $e->getMessage());
+                return response()->json([
+                    "message" => "Please provide your details in the format: name, contact, email"
+                ], 400);
+            }
+        }
+
+        return response()->json(["message" => "No response provided."], 400);
+    }
+
+    private function logConversation($userId, $sender, $message)
+{
+    Log::info("[$sender] User {$userId}: {$message}");
+}
+
 }
