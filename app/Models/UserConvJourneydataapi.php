@@ -9,13 +9,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class UserConvJourneydataapi extends Model
 {
-    use HasFactory;
-
-    protected $table = 'user_conv_journey'; // Ensure the correct table name
+    protected $table = 'user_conv_journey'; // Adjust table name if needed
     protected $primaryKey = 'user_conv_journey_id';
-    public $incrementing = false; // Because we're manually assigning an alphanumeric ID
-    protected $keyType = 'string'; // This allows alphanumeric primary keys
-    protected $fillable = ['user_conv_journey_id', 'user_conversation'];
+    public $timestamps = false;
 
-    public $timestamps = false; // Disable timestamps since they are not in your table
+    protected $fillable = [
+        'user_conv_journey_id',
+        'user_conversation'
+    ];
 }

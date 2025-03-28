@@ -11,6 +11,8 @@ use App\Models\terminateChat;
 use App\Models\terminateResponse;
 use App\Models\terminatTicketsData;
 use App\Models\submitDetails;
+use App\Models\ChatbotDataapi;
+use Carbon\Carbon;
 
 
 use Exception;
@@ -25,54 +27,41 @@ class ChatbotControllerapi extends Controller
 {
     public function initRecordingConversation(Request $request)
     {
+        $userId = $request->input('user_id');
+
         try {
-            // Validate the request input
-            $validatedData = $request->validate([
-                'user_id' => 'required|regex:/^[a-zA-Z0-9]+$/|max:255'
-            ], [
-                'user_id.required' => 'The user_id field is required.',
-                'user_id.regex' => 'The user_id must contain only letters and numbers.',  
-                'user_id.max' => 'The user_id is too long.'
-            ]);
-
-            $userId = $validatedData['user_id'];
-
-            Log::info("Received user_id: " . $userId); // Debugging log
-
-            // Check if the conversation journey exists
-            $existingUser = UserConvJourneydataapi::where('user_conv_journey_id', $userId)->first();
-            
-            if (!$existingUser) {
-                // Manually insert the data and check if it's inserted
-                $insert = DB::table('user_conv_journey')->insert([
-                    'user_conv_journey_id' => $userId,
-                    'user_conversation' => ''
-                ]);
-
-                if ($insert) {
-                    Log::info("New user inserted successfully: " . $userId);
-                    return response()->json(["message" => "Conversation journey initialized."], 200);
-                } else {
-                    Log::error("Failed to insert new user: " . $userId);
-                    return response()->json(["message" => "Failed to insert new user."], 500);
-                }
-            } else {
-                Log::info("User already exists: " . $userId);
+            // Check if conversation journey already exists
+            $existingConversation = UserConvJourneydataapi::where('user_conv_journey_id', $userId)->first();
+            if ($existingConversation) {
                 return response()->json(["message" => "Conversation journey already exists."], 400);
             }
 
-        } catch (QueryException $e) {
+            DB::beginTransaction();
+
+            // Create a new conversation journey record
+            $newConversation = new UserConvJourneydataapi();
+            $newConversation->user_conv_journey_id = $userId;
+            $newConversation->user_conversation = "";
+            $newConversation->save();
+
+            // Create chatbot data and set conversation start time
+            $chatbotData = new ChatbotDataapi();
+            $chatbotData->user_id = $userId;
+            $chatbotData->name = "Unknown";
+            $chatbotData->conv_started = Carbon::now()->toTimeString();
+            $chatbotData->user_conv_journey_id = $userId;
+            $chatbotData->save();
+
+            DB::commit();
+
+            Log::info("Conversation started at " . $chatbotData->conv_started);
+
+            return response()->json(["message" => "Conversation journey initialized."], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
             Log::error("Database error: " . $e->getMessage());
-            return response()->json([
-                "message" => "Database error occurred.",
-                "error" => $e->getMessage()
-            ], 500);
-        } catch (Exception $e) {
-            Log::error("Unexpected error: " . $e->getMessage());
-            return response()->json([
-                "message" => "An unexpected error occurred.",
-                "error" => $e->getMessage()
-            ], 500);
+            return response()->json(["message" => "Database error occurred."], 500);
         }
     }
 
@@ -387,22 +376,7 @@ class ChatbotControllerapi extends Controller
     }
 
    
-    // protected function sendConversationEmail($userData, $convJourney)
-    // {
-    //     $receiverEmail = 'suyashbaoney09041998@gmail.com';
-    //     $subject = "User {$userData->name} conversation with ATai Chatbot";
-    //     $message = $this->cleanConversation($convJourney->user_conversation);
-
-    //     Mail::raw($message, function ($mail) use ($receiverEmail, $subject) {
-    //         $mail->from('suyashbaoney58@gmail.com', 'ATai Chatbot');
-    //         $mail->to($receiverEmail);
-    //         $mail->subject($subject);
-    //     });
-
-    //     Log::info("Email has been sent to {$receiverEmail}");
-    // }
-
-    protected function cleanConversation($conversation)
+        protected function cleanConversation($conversation)
     {
         // Implement your conversation cleaning logic here
         return $conversation;
