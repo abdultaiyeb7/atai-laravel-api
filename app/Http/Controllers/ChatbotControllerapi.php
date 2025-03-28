@@ -411,12 +411,12 @@ class ChatbotControllerapi extends Controller
 
                 // Append conversation log
                 $this->appendToConversation($userId, "User", $userResponse);
-                $this->appendToConversation($userId, "Chatbot", "Our representatives will reach out to you. Please give us a rating:");
+                $this->appendToConversation($userId, "Chatbot", "Our representatives will reach out to you. Please give us a details:");
 
                 DB::commit();
                 Log::info("User {$userId} provided callback preference and moved to level 7");
 
-                return response()->json(["message" => "Our representatives will reach out to you. Please give us a rating:"]);
+                return response()->json(["message" => "Thank You !:"]);
 
             } catch (\Exception $e) {
                 DB::rollBack();
