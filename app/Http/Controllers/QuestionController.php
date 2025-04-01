@@ -39,53 +39,7 @@ class QuestionController extends Controller
         }
     }
 
-//     public function getQuestions(Request $request)
-// {
-//     try {
-//         $clientId = $request->query('client_id');
-//         if (!$clientId) {
-//             return response()->json(['message' => 'Client ID is required.'], 400);
-//         }
-
-//         // Fetch all questions for the specified client ID
-//         $questions = Question::where('client_id', $clientId)
-//             ->orderBy('question_level', 'asc')
-//             ->get();
-
-//         // Build a hierarchical structure dynamically
-//         $questionsByParent = [];
-//         foreach ($questions as $question) {
-//             $questionsByParent[$question->question_parent_level][] = $question;
-//         }
-
-//         // Recursively build the hierarchy
-//         $hierarchicalData = $this->buildHierarchy($questionsByParent, 0);
-
-//         return response()->json(['questions' => $hierarchicalData], 200);
-
-//     } catch (\Exception $e) {
-//         return response()->json(['message' => $e->getMessage()], 500);
-//     }
-// }
-
-// // Recursive function to build the hierarchy
-// private function buildHierarchy($questionsByParent, $parentLevel)
-// {
-//     $result = [];
-//     if (isset($questionsByParent[$parentLevel])) {
-//         foreach ($questionsByParent[$parentLevel] as $question) {
-//             $children = $this->buildHierarchy($questionsByParent, $question->question_level);
-//             if ($children) {
-//                 $question->children = $children;
-//             }
-//             $result[] = $question;
-//         }
-//     }
-//     return $result;
-// }
-
-
-public function getQuestions(Request $request)
+    public function getQuestions(Request $request)
 {
     try {
         $clientId = $request->query('client_id');
@@ -98,25 +52,14 @@ public function getQuestions(Request $request)
             ->orderBy('question_level', 'asc')
             ->get();
 
-        // Organize questions by parent level
+        // Build a hierarchical structure dynamically
         $questionsByParent = [];
-        $allQuestionIds = [];
-
         foreach ($questions as $question) {
             $questionsByParent[$question->question_parent_level][] = $question;
-            $allQuestionIds[$question->id] = $question; // Store all question IDs for reference
-        }
-
-        // Identify root-level questions (questions that either have parent_level 0 or whose parent doesn't exist)
-        $rootQuestions = [];
-        foreach ($questions as $question) {
-            if ($question->question_parent_level === 0 || !isset($allQuestionIds[$question->question_parent_level])) {
-                $rootQuestions[] = $question;
-            }
         }
 
         // Recursively build the hierarchy
-        $hierarchicalData = $this->buildHierarchy($questionsByParent, $rootQuestions);
+        $hierarchicalData = $this->buildHierarchy($questionsByParent, 0);
 
         return response()->json(['questions' => $hierarchicalData], 200);
 
@@ -126,21 +69,20 @@ public function getQuestions(Request $request)
 }
 
 // Recursive function to build the hierarchy
-private function buildHierarchy($questionsByParent, $parentQuestions)
+private function buildHierarchy($questionsByParent, $parentLevel)
 {
     $result = [];
-    foreach ($parentQuestions as $question) {
-        $questionId = $question->id;
-        if (isset($questionsByParent[$questionId])) {
-            $question->children = $this->buildHierarchy($questionsByParent, $questionsByParent[$questionId]);
-        } else {
-            $question->children = [];
+    if (isset($questionsByParent[$parentLevel])) {
+        foreach ($questionsByParent[$parentLevel] as $question) {
+            $children = $this->buildHierarchy($questionsByParent, $question->question_level);
+            if ($children) {
+                $question->children = $children;
+            }
+            $result[] = $question;
         }
-        $result[] = $question;
     }
     return $result;
 }
-
 
 public function updateQuestion(Request $request)
 {
