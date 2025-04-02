@@ -162,55 +162,6 @@ public function updateQuestion(Request $request)
 }
 
 
-// public function updateQuestion(Request $request)
-// {
-//     try {
-//         // Validate request data
-//         $validatedData = $request->validate([
-//             'action_type' => 'required|in:U',
-//             'p_id' => 'required|integer|min:1', // Ensure a valid question ID
-//             'p_question_text' => 'required|string',
-//             'p_question_label' => 'nullable|string|max:500',
-//             'p_question_type' => 'required|integer|in:1,2,3,4,5,6',
-//             'p_client_id' => 'required|integer',
-//             'p_question_parent_level' => 'nullable|integer',
-//         ]);
-
-//         // Fetch the existing question (to keep p_question_level unchanged)
-//         $question = Question::find($validatedData['p_id']);
-
-//         if (!$question) {
-//             return response()->json(['message' => 'Error: Question ID not found.'], 404);
-//         }
-
-//         // Use the existing question_level value (do not update it)
-//         $p_question_level = $question->question_level;
-
-//         // Call the stored procedure for updating (without modifying question_level)
-//         DB::statement(
-//             'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, @message)',
-//             [
-//                 $validatedData['action_type'],
-//                 $validatedData['p_id'],
-//                 $validatedData['p_question_text'],
-//                 $validatedData['p_question_label'] ?? null,
-//                 $validatedData['p_question_type'],
-//                 $validatedData['p_client_id'],
-//                 $p_question_level, // Keep the original level, do not change
-//                 $validatedData['p_question_parent_level'] ?? null,
-//             ]
-//         );
-
-//         // Fetch the OUT parameter value
-//         $result = DB::select('SELECT @message AS message');
-//         $message = $result[0]->message;
-
-//         return response()->json(['message' => $message], 200);
-
-//     } catch (\Exception $e) {
-//         return response()->json(['message' => $e->getMessage()], 500);
-//     }
-// }
 
 
 
