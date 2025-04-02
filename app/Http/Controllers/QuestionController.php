@@ -84,6 +84,84 @@ private function buildHierarchy($questionsByParent, $parentLevel)
     return $result;
 }
 
+// public function updateQuestion(Request $request)
+// {
+//     try {
+//         // Validate request data (Allow array input for batch updates)
+//         $validatedData = $request->validate([
+//             'questions' => 'required|array|min:1',
+//             'questions.*.action_type' => 'required|in:U',
+//             'questions.*.p_id' => 'required|integer|min:1', // Ensure a valid question ID
+//             'questions.*.p_question_text' => 'required|string',
+//             'questions.*.p_question_label' => 'nullable|string|max:500',
+//             'questions.*.p_question_type' => 'required|integer|in:1,2,3,4,5,6',
+//             'questions.*.p_client_id' => 'required|integer',
+//             'questions.*.p_question_parent_level' => 'nullable|integer',
+//         ]);
+
+//         $messages = [];
+
+//         foreach ($validatedData['questions'] as $questionData) {
+//             // Fetch the existing question from the database
+//             $question = Question::find($questionData['p_id']);
+
+//             if (!$question) {
+//                 $messages[] = [
+//                     'p_id' => $questionData['p_id'],
+//                     'message' => 'Error: Question ID not found.'
+//                 ];
+//                 continue; // Skip this question and move to the next one
+//             }
+
+//             // Ensure question_level does not change
+//             $p_question_level = $question->question_level;
+
+//             // Check if any changes were made
+//             $isSameText = $questionData['p_question_text'] === $question->question_text;
+//             $isSameLabel = $questionData['p_question_label'] === $question->question_label;
+//             $isSameType = $questionData['p_question_type'] == $question->question_type;
+//             $isSameParent = isset($questionData['p_question_parent_level']) && 
+//                             $questionData['p_question_parent_level'] == $question->question_parent_level;
+
+//             if ($isSameText && $isSameLabel && $isSameType && $isSameParent) {
+//                 $messages[] = [
+//                     'p_id' => $questionData['p_id'],
+//                     'message' => 'No changes detected, question remains the same.'
+//                 ];
+//                 continue; // Skip this question and move to the next one
+//             }
+
+//             // Call the stored procedure for updating each question one by one
+//             DB::statement(
+//                 'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, @message)',
+//                 [
+//                     $questionData['action_type'],
+//                     $questionData['p_id'],
+//                     $questionData['p_question_text'],
+//                     $questionData['p_question_label'] ?? null,
+//                     $questionData['p_question_type'],
+//                     $questionData['p_client_id'],
+//                     $p_question_level, // Keep the original level, do not change
+//                     $questionData['p_question_parent_level'] ?? null,
+//                 ]
+//             );
+
+//             // Fetch the OUT parameter value
+//             $result = DB::select('SELECT @message AS message');
+//             $messages[] = [
+//                 'p_id' => $questionData['p_id'],
+//                 'message' => $result[0]->message
+//             ];
+//         }
+
+//         return response()->json(['messages' => $messages], 200);
+
+//     } catch (\Exception $e) {
+//         return response()->json(['message' => $e->getMessage()], 500);
+//     }
+// }
+
+
 public function updateQuestion(Request $request)
 {
     try {
@@ -116,14 +194,11 @@ public function updateQuestion(Request $request)
             // Ensure question_level does not change
             $p_question_level = $question->question_level;
 
-            // Check if any changes were made
-            $isSameText = $questionData['p_question_text'] === $question->question_text;
-            $isSameLabel = $questionData['p_question_label'] === $question->question_label;
-            $isSameType = $questionData['p_question_type'] == $question->question_type;
-            $isSameParent = isset($questionData['p_question_parent_level']) && 
-                            $questionData['p_question_parent_level'] == $question->question_parent_level;
+            // Check if question_level and question_parent_level are the same
+            $isSameLevel = isset($questionData['p_question_parent_level']) &&
+                           $questionData['p_question_parent_level'] == $p_question_level;
 
-            if ($isSameText && $isSameLabel && $isSameType && $isSameParent) {
+            if ($isSameLevel) {
                 $messages[] = [
                     'p_id' => $questionData['p_id'],
                     'message' => 'No changes detected, question remains the same.'
@@ -160,8 +235,6 @@ public function updateQuestion(Request $request)
         return response()->json(['message' => $e->getMessage()], 500);
     }
 }
-
-
 
 
 
