@@ -29,6 +29,9 @@ Route::put('/manage-user', [UserController::class, 'updateUser']);
 Route::delete('/manage-user', [UserController::class, 'deleteUser']);
  Route::get('/manage-user', [UserController::class, 'getUser']);
 
+ Route::post('/update-password', [UserController::class, 'updatePassword']);
+ Route::get('/get-user-credentials/{user_id}', [UserController::class, 'getUserCredentials']);
+ Route::post('/verify-user-credentials', [UserController::class, 'verifyUserCredentials']);
 
 
  Route::get('/tickets/get_all_tickets_info', [TicketController::class, 'getAllTicketsInfo']);
