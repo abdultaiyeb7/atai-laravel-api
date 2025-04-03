@@ -241,5 +241,51 @@ public function deleteQuestion(Request $request)
         return response()->json(['questions' => $questions], 200);
     }
 
+    public function getChildQuestions(Request $request)
+    {
+        // Validate input parameters
+        $request->validate([
+            'question_level' => 'required|integer',
+            'client_id' => 'required|integer',
+        ]);
+
+        $questionLevel = $request->input('question_level');
+        $clientId = $request->input('client_id');
+
+        try {
+            // Set the output variables before calling the procedure
+            DB::statement("SET @p_id = 0;");
+            DB::statement("SET @p_question_level = ?;", [$questionLevel]);
+            DB::statement("SET @message = '';");
+
+            // Call the stored procedure with correct parameters
+            $questions = DB::select("CALL sp_manage_questions(?, @p_id, '', '', NULL, ?, @p_question_level, NULL, @message)", [
+                'C',   // action_type
+                $clientId
+            ]);
+
+            // Fetch the output parameters
+            $messageResult = DB::select("SELECT @message AS message;");
+            $message = $messageResult[0]->message ?? 'No message returned';
+
+            // Handle the case where no data is returned
+            if (empty($questions)) {
+                return response()->json([
+                    'message' => 'No questions found for the given criteria.',
+                    'data' => []
+                ], 200);
+            }
+
+            return response()->json([
+                'message' => $message ?: 'Questions fetched successfully.',
+                'data' => $questions,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Database error',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
 }
