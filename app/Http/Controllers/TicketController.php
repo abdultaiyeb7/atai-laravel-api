@@ -22,6 +22,7 @@ use App\Models\getRemarks;
 use App\Models\getFollowUpTickets;
 use App\Models\updateTicketResolution;
 use App\Models\Status;
+use App\Models\duration;
 
 
 use Illuminate\Http\Request;
@@ -509,7 +510,7 @@ class TicketController extends Controller
             return response()->json(["message" => "User ID is required"], 400);
         }
 
-        $chatbotData = ChatbotData::where('user_id', $userId)->first();
+        $chatbotData = duration::where('user_id', $userId)->first();
 
         if (!$chatbotData) {
              return response()->json(["message" => "User data not found"], 404);
