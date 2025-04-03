@@ -613,6 +613,47 @@ public function getUser(Request $request)
     }
 }
 
+public function deleteUserByEmail(Request $request)
+{
+    // Validate input
+    $validator = Validator::make($request->all(), [
+        'email' => 'required|email|exists:user_data,email',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Validation failed!',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    try {
+        // Delete user from user_data table
+        $deleted = DB::table('user_data')->where('email', $request->email)->delete();
+
+        if ($deleted) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User deleted successfully!'
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'User not found!'
+        ], 404);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Database error!',
+            'error_details' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
 
 
 }

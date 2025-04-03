@@ -36,6 +36,10 @@ Route::delete('/manage-user', [UserController::class, 'deleteUser']);
  Route::get('/get-user-credentials/{user_id}', [UserController::class, 'getUserCredentials']);
  Route::post('/verify-user-credentials', [UserController::class, 'verifyUserCredentials']);
 
+ 
+ Route::delete('/delete-user', [UserController::class, 'deleteUserByEmail']);
+
+
 
  Route::get('/tickets/get_all_tickets_info', [TicketController::class, 'getAllTicketsInfo']);
 
