@@ -257,7 +257,10 @@ DB::table('user_data')->updateOrInsert(
 
 
         // Construct verification link
-        $verificationLink = url("http://localhost:3000/setup-password/{$latestUserId}");
+        // $verificationLink = url("http://localhost:3000/setup-password/{$latestUserId}");
+
+                    $verificationLink = url("https://dev.atai.admin.raghavsolars.com/setup-password/{$latestUserId}");
+
 
         // Send email if email is provided
         if ($request->filled('p_email')) {
