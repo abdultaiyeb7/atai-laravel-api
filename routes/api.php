@@ -111,3 +111,9 @@ Route::post('/submit_details', [ChatbotControllerapi::class, 'submitDetails']);
  Route::post('/terminate', [ChatbotControllerapi::class, 'terminateChat']);
 
  Route::post('/terminate_response', [ChatbotControllerapi::class, 'terminateResponse']);
+
+
+ Route::post('/questions-chain', [ChatbotControllerapi::class, 'getQuestionChain']);
+
+
+// Route::post('/store-conversation', [ChatbotControllerapi::class, 'storeUserConversation']);

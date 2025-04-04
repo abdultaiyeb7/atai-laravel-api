@@ -26,22 +26,66 @@ use Illuminate\Support\Facades\Mail;
 
 class ChatbotControllerapi extends Controller
 {
+    // public function initRecordingConversation(Request $request)
+    // {
+    //     $userId = $request->input('user_id');
+
+    //     try {
+    //         // Check if conversation journey already exists
+    //         $existingConversation = UserConvJourneydataapi::where('user_conv_journey_id', $userId)->first();
+    //         if ($existingConversation) {
+    //             return response()->json(["message" => "Conversation journey already exists."], 400);
+    //         }
+
+    //         DB::beginTransaction();
+
+    //         // Create a new conversation journey record
+    //         $newConversation = new UserConvJourneydataapi();
+    //         $newConversation->user_conv_journey_id = $userId;
+    //         $newConversation->user_conversation = "";
+    //         $newConversation->save();
+
+    //         // Create chatbot data and set conversation start time
+    //         $chatbotData = new ChatbotDataapi();
+    //         $chatbotData->user_id = $userId;
+    //         $chatbotData->name = "Unknown";
+    //         $chatbotData->conv_started = Carbon::now()->toTimeString();
+    //         $chatbotData->user_conv_journey_id = $userId;
+    //         $chatbotData->save();
+
+    //         DB::commit();
+
+    //         Log::info("Conversation started at " . $chatbotData->conv_started);
+
+    //         return response()->json(["message" => "Conversation journey initialized."], 200);
+
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         Log::error("Database error: " . $e->getMessage());
+    //         return response()->json(["message" => "Database error occurred."], 500);
+    //     }
+    // }
+
     public function initRecordingConversation(Request $request)
     {
-        $userId = $request->input('user_id');
-
         try {
+            $request->validate([
+                'user_id' => 'required|string',
+            ]);
+
+            $userId = $request->input('user_id');
+
             // Check if conversation journey already exists
             $existingConversation = UserConvJourneydataapi::where('user_conv_journey_id', $userId)->first();
             if ($existingConversation) {
-                return response()->json(["message" => "Conversation journey already exists."], 400);
+                return response()->json(["status" => "error", "message" => "Conversation journey already exists."], 400);
             }
 
             DB::beginTransaction();
 
             // Create a new conversation journey record
             $newConversation = new UserConvJourneydataapi();
-            $newConversation->user_conv_journey_id = $userId;
+            $newConversation->user_conv_journey_id = $userId; // Ensure ID is correctly set
             $newConversation->user_conversation = "";
             $newConversation->save();
 
@@ -55,175 +99,56 @@ class ChatbotControllerapi extends Controller
 
             DB::commit();
 
-            Log::info("Conversation started at " . $chatbotData->conv_started);
+            Log::info("Conversation started for User ID: $userId at " . $chatbotData->conv_started);
 
-            return response()->json(["message" => "Conversation journey initialized."], 200);
+            return response()->json([
+                "status" => "success",
+                "message" => "Conversation journey initialized.",
+                "user_conv_journey_id" => $newConversation->user_conv_journey_id
+            ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Database error: " . $e->getMessage());
-            return response()->json(["message" => "Database error occurred."], 500);
+            return response()->json(["status" => "error", "message" => "Database error occurred."], 500);
         }
     }
 
-    // public function submitCallbackPreference(Request $request)
+    // Store User Conversation Response
+    // public function storeUserConversation(Request $request)
     // {
     //     try {
-    //         // Validate request
-    //         $validatedData = $request->validate([
-    //             'user_id' => 'required|string|max:255',
-    //             'message' => 'required|string|in:Yes,No'
-    //         ], [
-    //             'user_id.required' => 'User ID is required.',
-    //             'message.required' => 'Message is required.',
-    //             'message.in' => 'Message must be either Yes or No.'
+    //         $request->validate([
+    //             'user_conv_journey_id' => 'required|',
+    //             'user_conversation' => 'required|string',
     //         ]);
 
-    //         $userId = $validatedData['user_id'];
-    //         $userResponse = $validatedData['message'];
+    //         $journeyId = $request->input('user_conv_journey_id');
+    //         $userConversation = $request->input('user_conversation');
 
-    //         // Fetch user from the database
-    //         $user = ChatbotDataapi::where('user_id', $userId)->first();
-
-    //         if (!$user) {
-    //             return response()->json(["message" => "User not found. Please start a new session."], 404);
+    //         // Check if the conversation journey exists
+    //         $conversation = UserConvJourneydataapi::where('user_conv_journey_id', $journeyId)->first();
+    //         if (!$conversation) {
+    //             return response()->json(["status" => "error", "message" => "Conversation journey not found."], 404);
     //         }
 
-    //         if ($userResponse === "Yes") {
-    //             // Update callback request
-    //             $user->callback_requested = true;
-    //             $user->save();
+    //         // Update the conversation
+    //         $conversation->user_conversation = $userConversation;
+    //         $conversation->save();
 
-    //             // Return user details along with their actual session level
-    //             return response()->json([
-    //                 "message" => "Kindly provide your details to help us provide you the best service:",
-    //                 "details" => [
-    //                     "name" => $user->name,
-    //                     "email" => $user->email,
-    //                     "contact" => $user->contact,
-    //                     "session_level" => $user->session_level // Show actual session level
-    //                 ]
-    //             ]);
-    //         } else {
-    //             // If user says "No", just thank them
-    //             return response()->json(["message" => "Thank you for visiting us."], 200);
-    //         }
+    //         return response()->json([
+    //             "status" => "success",
+    //             "message" => "User conversation updated successfully.",
+    //             "user_conv_journey_id" => $journeyId
+    //         ], 200);
 
     //     } catch (\Exception $e) {
-    //         Log::error("Error in submitCallbackPreference: " . $e->getMessage());
-    //         return response()->json([
-    //             "message" => "An error occurred. Please try again.",
-    //             "error" => $e->getMessage()
-    //         ], 500);
+    //         Log::error("Error storing user conversation: " . $e->getMessage());
+    //         return response()->json(["status" => "error", "message" => "An error occurred while saving the conversation."], 500);
     //     }
     // }
-//     public function submitCallbackPreference_atai(Request $request)
-// {
-//     try {
-//         // Validate request
-//         $validatedData = $request->validate([
-//             'user_id' => 'required|string|max:255',
-//             'message' => 'required|string|in:Yes,No'
-//         ], [
-//             'user_id.required' => 'User ID is required.',
-//             'message.required' => 'Message is required.',
-//             'message.in' => 'Message must be either Yes or No.'
-//         ]);
 
-//         $user = ChatbotDataapi::where('user_id', $validatedData['user_id'])->first();
-
-//         if (!$user) {
-//             return response()->json(["message" => "User not found. Please start a new session."], 404);
-//         }
-
-//         if ($validatedData['message'] === "Yes") {
-//             // Update callback request
-//             $user->update(['callback_requested' => true]);
-
-//             return response()->json([
-//                 "message" => "Kindly provide your details to help us serve you better:",
-//                 "details" => [
-//                     "name" => $user->name,
-//                     "email" => $user->email,
-//                     "contact" => $user->contact,
-//                     "session_level" => $user->session_level
-//                 ]
-//             ]);
-//         }
-
-//         return response()->json(["message" => "Thank you for visiting us."], 200);
-
-//     } catch (\Illuminate\Validation\ValidationException $e) {
-//         return response()->json(["message" => $e->getMessage()], 422);
-//     } catch (\Exception $e) {
-//         Log::error("Error in submitCallbackPreference_atai: " . $e->getMessage());
-//         return response()->json([
-//             "message" => "An unexpected error occurred. Please try again.",
-//         ], 500);
-//     }
-// }
-
-
-//     public function submitDetails(Request $request)
-//     {
-//         $data = $request->json()->all();
-//         $userId = $data['user_id'] ?? null;
-//         $userResponse = $data['message'] ?? null;
-//         $userQuery = $data['user_query'] ?? null;
-
-//         $userData = ChatbotDataapi::where('user_id', $userId)->first();
-
-//         if (!$userData) {
-//             Log::info("User $userId not found");
-//             return response()->json(["message" => "User not found. Please start a new session."]);
-//         }
-
-//         if ($userResponse) {
-//             try {
-//                 $details = explode(',', $userResponse);
-//                 if (count($details) < 3) {
-//                     throw new \Exception("Invalid format");
-//                 }
-
-//                 $userData->name = trim($details[0]);
-//                 $userData->contact = trim($details[1] ?? '');
-//                 $userData->email = trim($details[2] ?? '');
-//                 $userData->session_level = 6;
-//                 $userData->save();
-
-//                 $this->appendToConversation($userId, "User", "Details provided: $userResponse");
-//                 Log::info("User $userId provided details and moved to level 6");
-
-//                 if ($userQuery) {
-//                     $userData->userquery = trim($userQuery);
-//                     $userData->save();
-//                     $this->appendToConversation($userId, "User", "Query: $userQuery");
-
-//                     $apiResponse = "Your details have been saved and your query has been registered. Please give us a rating:";
-//                     $this->appendToConversation($userId, "Chatbot", $apiResponse);
-//                     Log::info("User $userId query saved: $userQuery");
-
-//                     return response()->json(["message" => $apiResponse]); // ✅ Only returning the message
-//                 }
-
-//                 $apiResponse = "Our representatives will reach out to you. Please give us a rating:";
-//                 $this->appendToConversation($userId, "Chatbot", $apiResponse);
-//                 return response()->json(["message" => $apiResponse]); // ✅ Only returning the message
-
-//             } catch (\Exception $e) {
-//                 $errorMessage = "Please provide your details in the format: name, contact, email";
-//                 $this->appendToConversation($userId, "Chatbot", $errorMessage);
-//                 return response()->json(["message" => $errorMessage]);
-//             }
-//         }
-
-//         return response()->json(["message" => "No response provided"]);
-//     }
-
-//     private function appendToConversation($userId, $sender, $message)
-//     {
-//         // Implement logic to save conversation history
-//     }
+    
 
     public function submitSatisfaction(Request $request)
     {
@@ -551,5 +476,110 @@ class ChatbotControllerapi extends Controller
 {
     Log::info("[$sender] User {$userId}: {$message}");
 }
+
+
+public function getQuestionChain(Request $request)
+{
+    try {
+        $request->validate([
+            'p_question_parent_level' => 'required|integer',
+            'p_client_id' => 'required|integer',
+        ]);
+
+        $p_question_parent_level = $request->p_question_parent_level;
+        $p_client_id = $request->p_client_id;
+
+        $questions = DB::select("
+            WITH RECURSIVE question_chain AS (
+                SELECT question_level, question_text, question_parent_level, client_id
+                FROM questions
+                WHERE question_level = ? AND client_id = ?
+
+                UNION ALL
+
+                SELECT e.question_level, e.question_text, e.question_parent_level, e.client_id
+                FROM questions e
+                JOIN question_chain ec ON e.question_level = ec.question_parent_level AND e.client_id = ec.client_id
+            )
+            SELECT * FROM question_chain ORDER BY question_parent_level ASC;
+        ", [$p_question_parent_level, $p_client_id]);
+
+        if (empty($questions)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No questions found for the given parent level and client ID.',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Question chain retrieved successfully.',
+            'data' => $questions
+        ], 200);
+
+    } catch (\Exception $e) {
+        Log::error('Error fetching question chain: ' . $e->getMessage());
+        return response()->json([
+            'status' => 'error',
+            'message' => 'An error occurred while retrieving the question chain.',
+        ], 500);
+    }
+}
+
+// public function getQuestionChain(Request $request)
+// {
+//     try {
+//         $request->validate([
+//             'p_question_level' => 'required|integer', // The specific question level to retrieve
+//             'p_client_id' => 'required|integer',
+//         ]);
+
+//         $p_question_level = $request->p_question_level;
+//         $p_client_id = $request->p_client_id;
+
+//         $questions = DB::select("
+//             WITH RECURSIVE question_chain AS (
+//                 -- Start with the requested question level
+//                 SELECT question_level, question_text, question_parent_level, client_id
+//                 FROM questions
+//                 WHERE question_level = ? AND client_id = ?
+
+//                 UNION ALL
+
+//                 -- Recursively fetch parent questions leading up to the root
+//                 SELECT q.question_level, q.question_text, q.question_parent_level, q.client_id
+//                 FROM questions q
+//                 JOIN question_chain qc ON q.question_level = qc.question_parent_level
+//                 WHERE q.client_id = ?
+//             )
+//             SELECT * FROM question_chain ORDER BY question_level ASC;
+//         ", [$p_question_level, $p_client_id, $p_client_id]);
+
+//         if (empty($questions)) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'No questions found for the given level and client ID.',
+//             ], 404);
+//         }
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'Question chain retrieved successfully.',
+//             'data' => $questions
+//         ], 200);
+
+//     } catch (\Exception $e) {
+//         Log::error('Error fetching question chain: ' . $e->getMessage());
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'An error occurred while retrieving the question chain.',
+//         ], 500);
+//     }
+// }
+
+
+// Store User Conversation Response
+
+
 
 }
