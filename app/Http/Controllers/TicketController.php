@@ -33,98 +33,98 @@ use Illuminate\Support\Facades\DB;
 
 class TicketController extends Controller
 {
-    // public function getAllTicketsInfo(Request $request)
-    // {
-    //     try {
-    //         Log::info("Fetching all tickets information.");
-
-    //         // Fetch all tickets
-    //         $tickets = TicketsData::all();
-    //         $tickets_info = [];
-
-    //         // Define IST timezone
-    //         $ist = new DateTimeZone('Asia/Kolkata');
-
-    //         foreach ($tickets as $ticket) {
-    //             Log::info("Processing ticket_id: " . $ticket->ticket_id);
-
-    //             // Fetch the correct ticket title from the database
-    //             $ticket_title = $this->getTicketTitle($ticket->ticket_id);
-    //             Log::info("Ticket title fetched: " . $ticket_title);
-
-    //             // Determine resolved time
-    //             $resolved_time = $ticket->ticket_resolved ?: $ticket->ticket_created;
-    //             $status = $ticket->ticket_resolution_status ?: "Pending";
-                
-    //             // Convert to IST
-    //             $resolved_time_ist = Carbon::parse($resolved_time)->setTimezone($ist)->format('Y-m-d H:i:s');
-    //             Log::info("Resolved time in IST: " . $resolved_time_ist);
-
-    //             // Append to response
-    //             $tickets_info[] = [
-    //                 "ticket_id" => $ticket->ticket_id,
-    //                 "ticket_title" => $ticket_title,
-    //                 "updated" => $resolved_time_ist,
-    //                 "status" => $status,
-    //                 "agent_remarks" => $ticket->agent_remarks, // Ensure this field exists
-    //             ];
-    //         }
-
-    //         return response()->json($tickets_info, 200);
-    //     } catch (\Exception $e) {
-    //         Log::error("An error occurred: " . $e->getMessage());
-    //         return response()->json(["message" => "An error occurred while retrieving tickets information"], 500);
-    //     }
-    // }
-
     public function getAllTicketsInfo(Request $request)
-{
-    try {
-        Log::info("Fetching all tickets information.");
+    {
+        try {
+            Log::info("Fetching all tickets information.");
 
-        // Fetch tickets with pagination
-        $perPage = $request->query('per_page', 10); // Default to 10 per page
-        $tickets = TicketsData::paginate($perPage);
+            // Fetch all tickets
+            $tickets = TicketsData::all();
+            $tickets_info = [];
 
-        $tickets_info = $tickets->map(function ($ticket) {
-            Log::info("Processing ticket_id: " . $ticket->ticket_id);
+            // Define IST timezone
+            $ist = new DateTimeZone('Asia/Kolkata');
 
-            // Fetch the correct ticket title from the database
-            $ticket_title = $this->getTicketTitle($ticket->ticket_id);
-            Log::info("Ticket title fetched: " . $ticket_title);
+            foreach ($tickets as $ticket) {
+                Log::info("Processing ticket_id: " . $ticket->ticket_id);
 
-            // Determine resolved time
-            $resolved_time = $ticket->ticket_resolved ?: $ticket->ticket_created;
-            $status = $ticket->ticket_resolution_status ?: "Pending";
+                // Fetch the correct ticket title from the database
+                $ticket_title = $this->getTicketTitle($ticket->ticket_id);
+                Log::info("Ticket title fetched: " . $ticket_title);
 
-            // Convert to IST (Indian Standard Time)
-            $resolved_time_ist = Carbon::parse($resolved_time)
-                ->timezone('Asia/Kolkata')
-                ->format('Y-m-d H:i:s');
+                // Determine resolved time
+                $resolved_time = $ticket->ticket_resolved ?: $ticket->ticket_created;
+                $status = $ticket->ticket_resolution_status ?: "Pending";
+                
+                // Convert to IST
+                $resolved_time_ist = Carbon::parse($resolved_time)->setTimezone($ist)->format('Y-m-d H:i:s');
+                Log::info("Resolved time in IST: " . $resolved_time_ist);
 
-            Log::info("Resolved time in IST: " . $resolved_time_ist);
+                // Append to response
+                $tickets_info[] = [
+                    "ticket_id" => $ticket->ticket_id,
+                    "ticket_title" => $ticket_title,
+                    "updated" => $resolved_time_ist,
+                    "status" => $status,
+                    "agent_remarks" => $ticket->agent_remarks, // Ensure this field exists
+                ];
+            }
 
-            return [
-                "ticket_id" => $ticket->ticket_id,
-                "ticket_title" => $ticket_title,
-                "updated" => $resolved_time_ist,
-                "status" => $status,
-                "agent_remarks" => $ticket->agent_remarks,
-            ];
-        });
-
-        return response()->json([
-            "data" => $tickets_info,
-            "current_page" => $tickets->currentPage(),
-            "total_pages" => $tickets->lastPage(),
-            "total_tickets" => $tickets->total(),
-            "per_page" => $tickets->perPage(),
-        ], 200);
-    } catch (\Exception $e) {
-        Log::error("An error occurred: " . $e->getMessage());
-        return response()->json(["message" => "An error occurred while retrieving tickets information"], 500);
+            return response()->json($tickets_info, 200);
+        } catch (\Exception $e) {
+            Log::error("An error occurred: " . $e->getMessage());
+            return response()->json(["message" => "An error occurred while retrieving tickets information"], 500);
+        }
     }
-}
+
+//     public function getAllTicketsInfo(Request $request)
+// {
+//     try {
+//         Log::info("Fetching all tickets information.");
+
+//         // Fetch tickets with pagination
+//         $perPage = $request->query('per_page', 10); // Default to 10 per page
+//         $tickets = TicketsData::paginate($perPage);
+
+//         $tickets_info = $tickets->map(function ($ticket) {
+//             Log::info("Processing ticket_id: " . $ticket->ticket_id);
+
+//             // Fetch the correct ticket title from the database
+//             $ticket_title = $this->getTicketTitle($ticket->ticket_id);
+//             Log::info("Ticket title fetched: " . $ticket_title);
+
+//             // Determine resolved time
+//             $resolved_time = $ticket->ticket_resolved ?: $ticket->ticket_created;
+//             $status = $ticket->ticket_resolution_status ?: "Pending";
+
+//             // Convert to IST (Indian Standard Time)
+//             $resolved_time_ist = Carbon::parse($resolved_time)
+//                 ->timezone('Asia/Kolkata')
+//                 ->format('Y-m-d H:i:s');
+
+//             Log::info("Resolved time in IST: " . $resolved_time_ist);
+
+//             return [
+//                 "ticket_id" => $ticket->ticket_id,
+//                 "ticket_title" => $ticket_title,
+//                 "updated" => $resolved_time_ist,
+//                 "status" => $status,
+//                 "agent_remarks" => $ticket->agent_remarks,
+//             ];
+//         });
+
+//         return response()->json([
+//             "data" => $tickets_info,
+//             "current_page" => $tickets->currentPage(),
+//             "total_pages" => $tickets->lastPage(),
+//             "total_tickets" => $tickets->total(),
+//             "per_page" => $tickets->perPage(),
+//         ], 200);
+//     } catch (\Exception $e) {
+//         Log::error("An error occurred: " . $e->getMessage());
+//         return response()->json(["message" => "An error occurred while retrieving tickets information"], 500);
+//     }
+// }
 
 
     private function getTicketTitle($ticketId)
