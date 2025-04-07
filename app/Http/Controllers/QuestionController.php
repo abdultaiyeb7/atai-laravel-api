@@ -16,19 +16,37 @@ class QuestionController extends Controller
 
         try {
             // Call the stored procedure with the provided data
+            // DB::statement(
+            //     'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, @message)',
+            //     [
+            //         $validatedData['action_type'],
+            //         $validatedData['p_id'] ?? null,
+            //         $validatedData['p_question_text'],
+            //         $validatedData['p_question_label'] ?? null,
+            //         $validatedData['p_question_type'],
+            //         $validatedData['p_client_id'],
+            //         $validatedData['p_question_level'] ?? null,
+            //         $validatedData['p_question_parent_level'] ?? null,
+            //     ]
+            // );
+
             DB::statement(
-                'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, @message)',
+                'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message)',
                 [
-                    $validatedData['action_type'],
-                    $validatedData['p_id'] ?? null,
-                    $validatedData['p_question_text'],
-                    $validatedData['p_question_label'] ?? null,
-                    $validatedData['p_question_type'],
-                    $validatedData['p_client_id'],
-                    $validatedData['p_question_level'] ?? null,
-                    $validatedData['p_question_parent_level'] ?? null,
+                    $validatedData['action_type'],                         // 1
+                    $validatedData['p_id'] ?? null,                        // 2
+                    $validatedData['p_question_text'],                     // 3
+                    $validatedData['p_question_label'] ?? null,            // 4
+                    $validatedData['p_question_type'],                     // 5
+                    $validatedData['p_client_id'],                         // 6
+                    $validatedData['p_question_level'] ?? null,            // 7
+                    $validatedData['p_question_parent_level'] ?? null,     // 8
+                    $validatedData['p_page_size'] ?? null,                 // 9
+                    $validatedData['p_page'] ?? null                       // 10
                 ]
             );
+            
+
 
             $result = DB::select('SELECT @message AS message');
             $message = $result[0]->message;
@@ -132,8 +150,22 @@ public function updateQuestion(Request $request)
             }
 
             // Call the stored procedure for updating each question one by one
+            // DB::statement(
+            //     'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, @message)',
+            //     [
+            //         $questionData['action_type'],
+            //         $questionData['p_id'],
+            //         $questionData['p_question_text'],
+            //         $questionData['p_question_label'] ?? null,
+            //         $questionData['p_question_type'],
+            //         $questionData['p_client_id'],
+            //         $p_question_level, // Keep the original level, do not change
+            //         $questionData['p_question_parent_level'] ?? null,
+            //     ]
+            // );
+
             DB::statement(
-                'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, @message)',
+                'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message)',
                 [
                     $questionData['action_type'],
                     $questionData['p_id'],
@@ -141,10 +173,14 @@ public function updateQuestion(Request $request)
                     $questionData['p_question_label'] ?? null,
                     $questionData['p_question_type'],
                     $questionData['p_client_id'],
-                    $p_question_level, // Keep the original level, do not change
+                    $p_question_level,
                     $questionData['p_question_parent_level'] ?? null,
+                    $questionData['p_page_size'] ?? null,
+                    $questionData['p_page'] ?? null,
                 ]
             );
+            
+
 
             // Fetch the OUT parameter value
             $result = DB::select('SELECT @message AS message');
@@ -183,8 +219,22 @@ public function deleteQuestion(Request $request)
         ]);
 
         // Call the stored procedure for deletion
+        // DB::statement(
+        //     'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, @message)',
+        //     [
+        //         $validatedData['action_type'],
+        //         $validatedData['p_id'],
+        //         $validatedData['p_question_text'],
+        //         $validatedData['p_question_label'] ?? null,
+        //         $validatedData['p_question_type'],
+        //         $validatedData['p_client_id'],
+        //         $validatedData['p_question_level'] ?? null,
+        //         $validatedData['p_question_parent_level'] ?? null,
+        //     ]
+        // );
+
         DB::statement(
-            'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, @message)',
+            'CALL sp_manage_questions(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message)',
             [
                 $validatedData['action_type'],
                 $validatedData['p_id'],
@@ -194,9 +244,11 @@ public function deleteQuestion(Request $request)
                 $validatedData['p_client_id'],
                 $validatedData['p_question_level'] ?? null,
                 $validatedData['p_question_parent_level'] ?? null,
+                $validatedData['p_page_size'] ?? null,
+                $validatedData['p_page'] ?? null,
             ]
         );
-
+        
         // Fetch the OUT parameter value
         $result = DB::select('SELECT @message AS message');
         $message = $result[0]->message;
