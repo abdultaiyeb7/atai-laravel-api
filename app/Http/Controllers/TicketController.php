@@ -690,4 +690,44 @@ public function getFollowUpTickets()
         return response()->json(['statuses' => $statuses], 200);
     }
 
+
+    
+        public function getOpenTicketsCount()
+        {
+            $openCount = DB::table('tickets_data')
+                ->where('ticket_resolution_status', 'Open')
+                ->count();
+    
+            return response()->json([
+                'status' => 'success',
+                'open_tickets_count' => $openCount
+            ]);
+        }
+        public function getClosedTicketsCount()
+        {
+            $count = DB::table('tickets_data')
+                ->whereIn('ticket_resolution_status', [
+                    'Resolved and Closed', 
+                    'No Response from Client so Closed'
+                ])
+                ->count();
+    
+            return response()->json([
+                'status' => 'success',
+                'ticket_count' => $count
+            ]);
+        }
+    
+
+        public function getInProgressTicketsCount()
+        {
+            $count = DB::table('tickets_data')
+                ->where('ticket_resolution_status', 'In Progress, communication is going on with client.')
+                ->count();
+    
+            return response()->json([
+                'status' => 'success',
+                'ticket_count' => $count
+            ]);
+        }
 }

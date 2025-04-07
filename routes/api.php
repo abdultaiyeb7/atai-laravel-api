@@ -117,3 +117,11 @@ Route::post('/submit_details', [ChatbotControllerapi::class, 'submitDetails']);
 
 
 // Route::post('/store-conversation', [ChatbotControllerapi::class, 'storeUserConversation']);
+
+ Route::get('/open-count', [TicketController::class, 'getOpenTicketsCount']);
+
+ Route::get('/closed-count', [TicketController::class, 'getClosedTicketsCount']);
+
+
+Route::get('/in-progress-count', [TicketController::class, 'getInProgressTicketsCount']);
+
