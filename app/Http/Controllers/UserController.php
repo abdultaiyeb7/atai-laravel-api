@@ -589,15 +589,19 @@ public function getUser(Request $request)
         $mobile = $request->query('p_mobile');
         $panNumber = $request->query('p_PANNumber');
         $clientId = $request->query('p_ClientId'); // ✅ Added Client ID
+        $pageSize = $request->query('p_page_size', 10); // ✅ Default to 10 if not provided
+        $page = $request->query('p_page', 1); // ✅ Default to 1 if not provided
 
         // Ensure NULL is passed for missing parameters
-        $results = DB::select('CALL manage_user(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, ?)', [
+        $results = DB::select('CALL manage_user(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, ?, ?, ?)', [
             'G', // Action for GET
             $userId ?: NULL,
             $email ?: NULL,
             $mobile ?: NULL,
             $panNumber ?: NULL,
-            $clientId ?: NULL // ✅ Passed Client ID to the stored procedure
+            $clientId ?: NULL ,// ✅ Passed Client ID to the stored procedure
+            $pageSize,
+            $page
         ]);
 
         // Fetch the output message
