@@ -217,7 +217,25 @@ public function manageUser(Request $request)
 
     try {
         // Call the stored procedure
-        $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?)', [
+        // $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?)', [
+        //     $action,
+        //     $userId,
+        //     $request->input('p_user_name'),
+        //     $request->input('p_email'),
+        //     $request->input('p_mobile'),
+        //     $request->input('p_profile_pic'),
+        //     $request->input('p_status'),
+        //     '',
+        //     $request->input('p_otp'),
+        //     $request->input('p_is_verified'),
+        //     $request->input('p_is_available'),
+        //     $request->input('P_pannumber'),
+        //     $request->input('p_DocPath'),
+        //     $request->input('p_role_abbreviation'),
+        //     $request->input('p_ClientId'),
+        // ]);
+
+        $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?, ?, ?)', [
             $action,
             $userId,
             $request->input('p_user_name'),
@@ -233,7 +251,10 @@ public function manageUser(Request $request)
             $request->input('p_DocPath'),
             $request->input('p_role_abbreviation'),
             $request->input('p_ClientId'),
+            $request->input('p_page_size'), // newly added
+            $request->input('p_page'),      // newly added
         ]);
+        
 
         // Fetch stored procedure message
         $messageResult = DB::select('SELECT @message as message');
