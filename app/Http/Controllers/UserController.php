@@ -501,39 +501,78 @@ public function verifyUserCredentials(Request $request)
     /**
      * Delete User
      */
+    // public function deleteUser(Request $request)
+    // {
+    //     $userId = $request->input('p_user_id');
+
+    //     if (!$userId) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'User ID is required for deletion'
+    //         ], 400);
+    //     }
+
+    //     try {
+    //         DB::statement('CALL manage_user(?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, NULL, NULL, NULL)', [
+    //             'D', // Delete action
+    //             $userId
+    //         ]);
+
+    //         // Fetch stored procedure message
+    //         $messageResult = DB::select('SELECT @message as message');
+    //         $message = $messageResult[0]->message ?? 'User deleted successfully.';
+
+    //         return response()->json([
+    //             'status' => 'success',
+    //             'message' => $message
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Database error during deletion!',
+    //             'error_details' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
+
     public function deleteUser(Request $request)
-    {
-        $userId = $request->input('p_user_id');
+{
+    $userId = $request->input('p_user_id');
 
-        if (!$userId) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'User ID is required for deletion'
-            ], 400);
-        }
-
-        try {
-            DB::statement('CALL manage_user(?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, NULL, NULL, NULL)', [
-                'D', // Delete action
-                $userId
-            ]);
-
-            // Fetch stored procedure message
-            $messageResult = DB::select('SELECT @message as message');
-            $message = $messageResult[0]->message ?? 'User deleted successfully.';
-
-            return response()->json([
-                'status' => 'success',
-                'message' => $message
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Database error during deletion!',
-                'error_details' => $e->getMessage()
-            ], 500);
-        }
+    if (!$userId) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'User ID is required for deletion'
+        ], 400);
     }
+
+    try {
+        // Call stored procedure to delete from `users`
+        DB::statement('CALL manage_user(?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, NULL, NULL, NULL)', [
+            'D', // Delete action
+            $userId
+        ]);
+
+        // Delete from user_data table
+        DB::table('user_data')->where('user_id', $userId)->delete();
+
+        // Fetch stored procedure message
+        $messageResult = DB::select('SELECT @message as message');
+        $message = $messageResult[0]->message ?? 'User deleted successfully.';
+
+        return response()->json([
+            'status' => 'success',
+            'message' => $message
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Database error during deletion!',
+            'error_details' => $e->getMessage()
+        ], 500);
+    }
+}
 
     /**
      * Get User
