@@ -460,7 +460,7 @@ public function verifyUserCredentials(Request $request)
         $message = '';
 
         try {
-            $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?)', [
+            $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?, ?, ?)', [
                 'U', // Update action
                 $userId,
                 $request->input('p_user_name'),
@@ -476,6 +476,8 @@ public function verifyUserCredentials(Request $request)
                 $request->input('p_DocPath'),
                 $request->input('p_role_abbreviation'),
                 $request->input('p_ClientId'),
+                null, // p_page_size not needed for update, pass null
+                null  // p_page not needed for update, pass null
             ]);
 
             // Fetch stored procedure message
