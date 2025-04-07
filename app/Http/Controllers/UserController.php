@@ -317,6 +317,44 @@ DB::table('user_data')->updateOrInsert(
 
 
 
+// public function updatePassword(Request $request)
+// {
+//     // Validate input
+//     $validator = Validator::make($request->all(), [
+//         'user_id' => 'required|exists:user_data,user_id',
+//         'password' => 'required|min:6|confirmed',
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Validation failed!',
+//             'errors' => $validator->errors()
+//         ], 422);
+//     }
+
+//     try {
+//         // Hash the password before storing
+//         $hashedPassword = Hash::make($request->password);
+
+//         // Update password in user_data table
+//         DB::table('user_data')
+//             ->where('user_id', $request->user_id)
+//             ->update(['password' => $hashedPassword]);
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'Password updated successfully!',
+//         ]);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Database error!',
+//             'error_details' => $e->getMessage()
+//         ], 500);
+//     }
+// }
+
 public function updatePassword(Request $request)
 {
     // Validate input
@@ -342,6 +380,11 @@ public function updatePassword(Request $request)
             ->where('user_id', $request->user_id)
             ->update(['password' => $hashedPassword]);
 
+        // ✅ Also update the user's status to active (1) in the users table
+        DB::table('users')
+            ->where('user_id', $request->user_id)
+            ->update(['status' => 1]);
+
         return response()->json([
             'status' => 'success',
             'message' => 'Password updated successfully!',
@@ -354,6 +397,7 @@ public function updatePassword(Request $request)
         ], 500);
     }
 }
+
 
 
 public function getUserCredentials($user_id)
