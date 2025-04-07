@@ -511,7 +511,7 @@ public function verifyUserCredentials(Request $request)
         }
 
         try {
-            DB::statement('CALL manage_user(?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, NULL)', [
+            DB::statement('CALL manage_user(?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, NULL, NULL, NULL)', [
                 'D', // Delete action
                 $userId
             ]);
