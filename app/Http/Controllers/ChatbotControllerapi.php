@@ -232,128 +232,385 @@ class ChatbotControllerapi extends Controller
 
     // Example method to append to conversation logs
    
+    // public function terminateResponse(Request $request)
+    // {
+    //     // ✅ Step 1: Validate Input
+    //     $validator = Validator::make($request->all(), [
+    //         'user_id' => 'required|string|exists:atjoin_chatbot_data,user_id',
+    //         'message' => 'required|string'
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             "status" => "error",
+    //             "message" => "Invalid input data",
+    //             "errors" => $validator->errors()
+    //         ], 422);
+    //     }
+
+    //     $userId = $request->input('user_id');
+    //     $response = strtoupper($request->input('message'));
+
+    //     // ✅ Step 2: Fetch user and conversation journey data
+    //     $userData = TerminateResponse::where('user_id', $userId)->first();
+    //     $convJourney = UserConvJourneyDataApi::where('user_conv_journey_id', $userId)->first();
+
+    //     if (!$userData) {
+    //         return response()->json([
+    //             "status" => "error",
+    //             "message" => "User data not found for ID: $userId"
+    //         ], 404);
+    //     }
+
+    //     if (!$convJourney) {
+    //         return response()->json([
+    //             "status" => "error",
+    //             "message" => "Conversation journey not found for user ID: $userId"
+    //         ], 404);
+    //     }
+
+    //     // ✅ Step 3: Handle "YES" Response
+    //     if ($response === "YES") {
+    //         $this->appendToConversation($userId, "User", $response);
+    //         $apiResponse = "Please wait while we reconnect you...";
+    //         $this->appendToConversation($userId, "Chatbot", $apiResponse);
+    //         return response()->json(["message" => $apiResponse], 200);
+    //     }
+
+    //     // ✅ Step 4: Handle "NO" Response
+    //     if ($response === "NO") {
+    //         $this->appendToConversation($userId, "User", $response);
+
+    //         DB::beginTransaction();
+    //         try {
+    //             if ($userData->callback_requested || $userData->userquery) {
+    //                 // Create new ticket
+    //                 $newTicket = new terminatTicketsData([
+    //                     'ticket_id' => $userId,
+    //                     'user_id' => $userId,
+    //                     'user_name' => $userData->name,
+    //                     'contact' => $userData->contact,
+    //                     'email' => $userData->email,
+    //                     'callback_requested' => $userData->callback_requested,
+    //                     'userquery' => $userData->userquery,
+    //                     'user_conv_journey_id' => $userId,
+    //                     'is_ticket_resolved' => false,
+    //                     'ticket_starred' => false,
+    //                     'ticket_resolution_status' => 'Pending'
+    //                 ]);
+    //                 $newTicket->save();
+    //             }
+
+    //             // Mark session as terminated
+    //             $userData->is_terminated = true;
+    //             $userData->conv_ended = Carbon::now();
+    //             $userData->save();
+
+    //             // Append conversation log
+    //             $this->appendToConversation($userId, "Chatbot", "Thank you for using our service. Have a great day!");
+
+    //             // Send email
+    //             $emailSent = $this->sendConversationEmail($userData, $convJourney);
+
+    //             DB::commit();
+
+    //             $responseData = [
+    //                 "message" => "Thank you for using our service. Have a great day!",
+    //                 "ticket_id" => $userId
+    //             ];
+
+    //             if (!$emailSent) {
+    //                 $responseData["email_status"] = "Failed to send email.";
+    //             }
+
+    //             return response()->json($responseData, 200);
+
+    //         } catch (\Exception $e) {
+    //             DB::rollBack();
+    //             Log::error("❌ ERROR: Failed to process termination for user $userId: " . $e->getMessage());
+
+    //             return response()->json([
+    //                 "status" => "error",
+    //                 "message" => "An internal error occurred. Please try again.",
+    //                 "debug_info" => $e->getMessage() // Use this only for debugging, remove in production!
+    //             ], 500);
+    //         }
+    //     }
+
+    //     return response()->json([
+    //         "status" => "error",
+    //         "message" => "Invalid response. Please send 'Yes' or 'No'."
+    //     ], 400);
+    // }
+
+    // private function appendToConversation($userId, $sender, $message)
+    // {
+    //     Log::info("[$sender] User {$userId}: {$message}");
+    // }
+
+    // private function sendConversationEmail($userData, $convJourney)
+    // {
+    //     // Placeholder for email sending logic
+    //     return true;
+    // }
+
     public function terminateResponse(Request $request)
-    {
-        // ✅ Step 1: Validate Input
-        $validator = Validator::make($request->all(), [
-            'user_id' => 'required|string|exists:atjoin_chatbot_data,user_id',
-            'message' => 'required|string'
-        ]);
+{
+    // ✅ Step 1: Validate Input
+    $validator = Validator::make($request->all(), [
+        'user_id' => 'required|string|exists:atjoin_chatbot_data,user_id',
+        'message' => 'required|string'
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                "status" => "error",
-                "message" => "Invalid input data",
-                "errors" => $validator->errors()
-            ], 422);
-        }
-
-        $userId = $request->input('user_id');
-        $response = strtoupper($request->input('message'));
-
-        // ✅ Step 2: Fetch user and conversation journey data
-        $userData = TerminateResponse::where('user_id', $userId)->first();
-        $convJourney = UserConvJourneyDataApi::where('user_conv_journey_id', $userId)->first();
-
-        if (!$userData) {
-            return response()->json([
-                "status" => "error",
-                "message" => "User data not found for ID: $userId"
-            ], 404);
-        }
-
-        if (!$convJourney) {
-            return response()->json([
-                "status" => "error",
-                "message" => "Conversation journey not found for user ID: $userId"
-            ], 404);
-        }
-
-        // ✅ Step 3: Handle "YES" Response
-        if ($response === "YES") {
-            $this->appendToConversation($userId, "User", $response);
-            $apiResponse = "Please wait while we reconnect you...";
-            $this->appendToConversation($userId, "Chatbot", $apiResponse);
-            return response()->json(["message" => $apiResponse], 200);
-        }
-
-        // ✅ Step 4: Handle "NO" Response
-        if ($response === "NO") {
-            $this->appendToConversation($userId, "User", $response);
-
-            DB::beginTransaction();
-            try {
-                if ($userData->callback_requested || $userData->userquery) {
-                    // Create new ticket
-                    $newTicket = new terminatTicketsData([
-                        'ticket_id' => $userId,
-                        'user_id' => $userId,
-                        'user_name' => $userData->name,
-                        'contact' => $userData->contact,
-                        'email' => $userData->email,
-                        'callback_requested' => $userData->callback_requested,
-                        'userquery' => $userData->userquery,
-                        'user_conv_journey_id' => $userId,
-                        'is_ticket_resolved' => false,
-                        'ticket_starred' => false,
-                        'ticket_resolution_status' => 'Pending'
-                    ]);
-                    $newTicket->save();
-                }
-
-                // Mark session as terminated
-                $userData->is_terminated = true;
-                $userData->conv_ended = Carbon::now();
-                $userData->save();
-
-                // Append conversation log
-                $this->appendToConversation($userId, "Chatbot", "Thank you for using our service. Have a great day!");
-
-                // Send email
-                $emailSent = $this->sendConversationEmail($userData, $convJourney);
-
-                DB::commit();
-
-                $responseData = [
-                    "message" => "Thank you for using our service. Have a great day!",
-                    "ticket_id" => $userId
-                ];
-
-                if (!$emailSent) {
-                    $responseData["email_status"] = "Failed to send email.";
-                }
-
-                return response()->json($responseData, 200);
-
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::error("❌ ERROR: Failed to process termination for user $userId: " . $e->getMessage());
-
-                return response()->json([
-                    "status" => "error",
-                    "message" => "An internal error occurred. Please try again.",
-                    "debug_info" => $e->getMessage() // Use this only for debugging, remove in production!
-                ], 500);
-            }
-        }
-
+    if ($validator->fails()) {
         return response()->json([
             "status" => "error",
-            "message" => "Invalid response. Please send 'Yes' or 'No'."
-        ], 400);
+            "message" => "Invalid input data",
+            "errors" => $validator->errors()
+        ], 422);
     }
 
-    private function appendToConversation($userId, $sender, $message)
-    {
-        Log::info("[$sender] User {$userId}: {$message}");
+    $userId = $request->input('user_id');
+    $response = strtoupper($request->input('message'));
+
+    // ✅ Step 2: Fetch user and conversation journey data
+    $userData = TerminateResponse::where('user_id', $userId)->first();
+    $convJourney = UserConvJourneyDataApi::where('user_conv_journey_id', $userId)->first();
+
+    if (!$userData) {
+        return response()->json([
+            "status" => "error",
+            "message" => "User data not found for ID: $userId"
+        ], 404);
     }
 
-    private function sendConversationEmail($userData, $convJourney)
-    {
-        // Placeholder for email sending logic
-        return true;
+    if (!$convJourney) {
+        return response()->json([
+            "status" => "error",
+            "message" => "Conversation journey not found for user ID: $userId"
+        ], 404);
     }
 
+    // ✅ Step 3: Handle "YES" Response
+    if ($response === "YES") {
+        $this->appendToConversation($userId, "User", $response);
+        $apiResponse = "Please wait while we reconnect you...";
+        $this->appendToConversation($userId, "Chatbot", $apiResponse);
+        return response()->json(["message" => $apiResponse], 200);
+    }
+
+    // ✅ Step 4: Handle "NO" Response
+    if ($response === "NO") {
+        $this->appendToConversation($userId, "User", $response);
+
+        DB::beginTransaction();
+        try {
+            if ($userData->callback_requested || $userData->userquery) {
+                // Determine ticket title based on user query
+                $ticketTitle = $userData->userquery 
+                    ? "Received a query by {$userData->name} regarding {$userData->userquery}"
+                    : "Callback requested by {$userData->name}";
+
+                // Create new ticket
+                $newTicket = new terminatTicketsData([
+                    'ticket_id' => $userId,
+                    'user_id' => $userId,
+                    'user_name' => $userData->name,
+                    'contact' => $userData->contact,
+                    'email' => $userData->email,
+                    'callback_requested' => $userData->callback_requested,
+                    'userquery' => $userData->userquery,
+                    'user_conv_journey_id' => $userId,
+                    'is_ticket_resolved' => false,
+                    'ticket_starred' => false,
+                    'ticket_resolution_status' => 'Pending',
+                    'ticket_title' => $ticketTitle,
+                    'ticket_created' => Carbon::now('Asia/Kolkata') // ⏰ IST Time Added
+                ]);
+                $newTicket->save();
+            }
+
+            // Mark session as terminated
+            $userData->is_terminated = true;
+            $userData->conv_ended = Carbon::now();
+            $userData->save();
+
+            // Append conversation log
+            $this->appendToConversation($userId, "Chatbot", "Thank you for using our service. Have a great day!");
+
+            // Send email
+            $emailSent = $this->sendConversationEmail($userData, $convJourney);
+
+            DB::commit();
+
+            $responseData = [
+                "message" => "Thank you for using our service. Have a great day!",
+                "ticket_id" => $userId
+            ];
+
+            if (!$emailSent) {
+                $responseData["email_status"] = "Failed to send email.";
+            }
+
+            return response()->json($responseData, 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("❌ ERROR: Failed to process termination for user $userId: " . $e->getMessage());
+
+            return response()->json([
+                "status" => "error",
+                "message" => "An internal error occurred. Please try again.",
+                "debug_info" => $e->getMessage() // Use this only for debugging, remove in production!
+            ], 500);
+        }
+    }
+
+    return response()->json([
+        "status" => "error",
+        "message" => "Invalid response. Please send 'Yes' or 'No'."
+    ], 400);
+}
+
+private function appendToConversation($userId, $sender, $message)
+{
+    Log::info("[$sender] User {$userId}: {$message}");
+}
+
+private function sendConversationEmail($userData, $convJourney)
+{
+    // Placeholder for email sending logic
+    return true;
+}
+
+
+//     public function terminateResponse(Request $request)
+// {
+//     // ✅ Step 1: Validate Input
+//     $validator = Validator::make($request->all(), [
+//         'user_id' => 'required|string|exists:atjoin_chatbot_data,user_id',
+//         'message' => 'required|string'
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json([
+//             "status" => "error",
+//             "message" => "Invalid input data",
+//             "errors" => $validator->errors()
+//         ], 422);
+//     }
+
+//     $userId = $request->input('user_id');
+//     $response = strtoupper($request->input('message'));
+
+//     // ✅ Step 2: Fetch user and conversation journey data
+//     $userData = TerminateResponse::where('user_id', $userId)->first();
+//     $convJourney = UserConvJourneyDataApi::where('user_conv_journey_id', $userId)->first();
+
+//     if (!$userData) {
+//         return response()->json([
+//             "status" => "error",
+//             "message" => "User data not found for ID: $userId"
+//         ], 404);
+//     }
+
+//     if (!$convJourney) {
+//         return response()->json([
+//             "status" => "error",
+//             "message" => "Conversation journey not found for user ID: $userId"
+//         ], 404);
+//     }
+
+//     // ✅ Step 3: Handle "YES" Response
+//     if ($response === "YES") {
+//         $this->appendToConversation($userId, "User", $response);
+//         $apiResponse = "Please wait while we reconnect you...";
+//         $this->appendToConversation($userId, "Chatbot", $apiResponse);
+//         return response()->json(["message" => $apiResponse], 200);
+//     }
+
+//     // ✅ Step 4: Handle "NO" Response
+//     if ($response === "NO") {
+//         $this->appendToConversation($userId, "User", $response);
+
+//         DB::beginTransaction();
+//         try {
+//             if ($userData->callback_requested || $userData->userquery) {
+//                 // Determine ticket title based on user query
+//                 $ticketTitle = $userData->userquery 
+//                     ? "Received a query by {$userData->name} regarding {$userData->userquery}"
+//                     : "Callback requested by {$userData->name}";
+
+//                 // Create new ticket
+//                 $newTicket = new terminatTicketsData([
+//                     'ticket_id' => $userId,
+//                     'user_id' => $userId,
+//                     'user_name' => $userData->name,
+//                     'contact' => $userData->contact,
+//                     'email' => $userData->email,
+//                     'callback_requested' => $userData->callback_requested,
+//                     'userquery' => $userData->userquery,
+//                     'user_conv_journey_id' => $userId,
+//                     'is_ticket_resolved' => false,
+//                     'ticket_starred' => false,
+//                     'ticket_resolution_status' => 'Pending',
+//                     'ticket_title' => $ticketTitle  // Added the new field
+//                 ]);
+//                 $newTicket->save();
+//             }
+
+//             // Mark session as terminated
+//             $userData->is_terminated = true;
+//             $userData->conv_ended = Carbon::now();
+//             $userData->save();
+
+//             // Append conversation log
+//             $this->appendToConversation($userId, "Chatbot", "Thank you for using our service. Have a great day!");
+
+//             // Send email
+//             $emailSent = $this->sendConversationEmail($userData, $convJourney);
+
+//             DB::commit();
+
+//             $responseData = [
+//                 "message" => "Thank you for using our service. Have a great day!",
+//                 "ticket_id" => $userId
+//             ];
+
+//             if (!$emailSent) {
+//                 $responseData["email_status"] = "Failed to send email.";
+//             }
+
+//             return response()->json($responseData, 200);
+
+//         } catch (\Exception $e) {
+//             DB::rollBack();
+//             Log::error("❌ ERROR: Failed to process termination for user $userId: " . $e->getMessage());
+
+//             return response()->json([
+//                 "status" => "error",
+//                 "message" => "An internal error occurred. Please try again.",
+//                 "debug_info" => $e->getMessage() // Use this only for debugging, remove in production!
+//             ], 500);
+//         }
+//     }
+
+//     return response()->json([
+//         "status" => "error",
+//         "message" => "Invalid response. Please send 'Yes' or 'No'."
+//     ], 400);
+// }
+
+// private function appendToConversation($userId, $sender, $message)
+// {
+//     Log::info("[$sender] User {$userId}: {$message}");
+// }
+
+// private function sendConversationEmail($userData, $convJourney)
+// {
+//     // Placeholder for email sending logic
+//     return true;
+// }
     public function submitCallbackPreference(Request $request)
     {
         $userId = $request->input('user_id');

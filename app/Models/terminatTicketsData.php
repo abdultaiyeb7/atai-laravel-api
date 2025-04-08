@@ -28,7 +28,9 @@ class terminatTicketsData extends Model
         'user_conv_journey_id',
         'is_ticket_resolved',
         'ticket_starred',
-        'ticket_resolution_status'
+        'ticket_resolution_status',
+        'ticket_title', // THIS IS CRUCIAL
+        'ticket_created'   
     ];
 
     public $timestamps = false;
