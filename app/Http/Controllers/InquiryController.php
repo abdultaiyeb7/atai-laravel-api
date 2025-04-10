@@ -48,4 +48,58 @@ class InquiryController extends Controller
             'affected_rows' => $affectedRows[0]->affected_rows ?? 0
         ]);
     }
+
+    public function updateInquiry(Request $request)
+{
+    $actionType = 'U'; // For Update
+    $p_id = $request->input('p_id');
+    $statusDescription = $request->input('p_status'); // Pass status name from frontend
+    $p_User_id = $request->input('p_User_id');
+    $p_Client_name = $request->input('p_Client_name');
+    $p_contact = $request->input('p_contact');
+    $p_email = $request->input('p_email');
+    $p_last_question = $request->input('p_last_question');
+    $p_agent_remarks = $request->input('p_agent_remarks');
+    $p_Next_followup = $request->input('p_Next_followup');
+    $p_page_size = 10;
+    $p_page = 1;
+    $p_Client_id = 0;
+
+    // Fetch Status Code from status table
+    $statusCode = DB::table('status')
+        ->where('description', $statusDescription)
+        ->where('entity', 'INQ')   // INQ for inquiry status
+        ->value('code');
+
+    if (!$statusCode) {
+        return response()->json(['message' => 'Invalid Status Description'], 400);
+    }
+
+    // Call Stored Procedure
+    $result = DB::select('CALL manage_inquiry(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
+        $actionType,
+        $p_id,
+        $statusCode,  // Pass code not description
+        $p_User_id,
+        $p_Client_name,
+        $p_contact,
+        $p_email,
+        $p_last_question,
+        $p_agent_remarks,
+        $p_Next_followup,
+        $p_page_size,
+        $p_page,
+        $p_Client_id
+    ]);
+
+    $actionMessage = DB::select('SELECT @action_message as action_message');
+    $affectedRows = DB::select('SELECT @affected_rows as affected_rows');
+
+    return response()->json([
+        'data' => $result,
+        'message' => $actionMessage[0]->action_message ?? '',
+        'affected_rows' => $affectedRows[0]->affected_rows ?? 0
+    ]);
+}
+
 }

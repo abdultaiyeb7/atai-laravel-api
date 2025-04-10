@@ -132,5 +132,7 @@ Route::get('/in-progress-count', [TicketController::class, 'getInProgressTickets
 Route::post('/manage-inquiry', [InquiryController::class, 'manageInquiry']);
 
 
+// routes/api.php
 
+Route::put('/update-inquiry', [InquiryController::class, 'updateInquiry']);
 
