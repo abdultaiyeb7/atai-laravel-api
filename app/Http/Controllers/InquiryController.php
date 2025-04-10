@@ -103,11 +103,82 @@ class InquiryController extends Controller
 }
 
 
+// public function deleteInquiry($id)
+// {
+//     $actionType = 'D';  // For Delete
+//     $p_id = $id;
+//     $p_status = '';  // Not Required in Delete
+//     $p_User_id = '';
+//     $p_Client_name = '';
+//     $p_contact = '';
+//     $p_email = '';
+//     $p_last_question = 0;
+//     $p_agent_remarks = '';
+//     $p_Next_followup = null;
+//     $p_page_size = 10;
+//     $p_page = 1;
+//     $p_Client_id = 0;
+
+//     // Call Stored Procedure
+//     $result = DB::select('CALL manage_inquiry(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
+//         $actionType,
+//         $p_id,
+//         $p_status,
+//         $p_User_id,
+//         $p_Client_name,
+//         $p_contact,
+//         $p_email,
+//         $p_last_question,
+//         $p_agent_remarks,
+//         $p_Next_followup,
+//         $p_page_size,
+//         $p_page,
+//         $p_Client_id
+//     ]);
+
+//     $actionMessage = DB::select('SELECT @action_message as action_message');
+//     $affectedRows = DB::select('SELECT @affected_rows as affected_rows');
+
+//     return response()->json([
+//         'message' => $actionMessage[0]->action_message ?? '',
+//         'affected_rows' => $affectedRows[0]->affected_rows ?? 0
+//     ]);
+// }
+
 public function deleteInquiry($id)
 {
+    // Check inquiry exists
+    $inquiry = DB::table('inquiry')->where('id', $id)->first();
+
+    if (!$inquiry) {
+        return response()->json([
+            'message' => 'Inquiry not found.',
+            'status' => false
+        ], 404);
+    }
+
+    // Fetch status code from inquiry table
+    $status = $inquiry->status;
+
+    // Validation based on status
+    if ($status == 'OPN') {
+        return response()->json([
+            'message' => 'Cannot delete inquiry because it is Open.',
+            'status' => false
+        ], 400);
+    }
+
+    if (!in_array($status, ['CNR', 'CRS'])) {
+        return response()->json([
+            'message' => 'Inquiry cannot be deleted in this status.',
+            'status' => false
+        ], 400);
+    }
+
+    // Proceed to Delete
     $actionType = 'D';  // For Delete
     $p_id = $id;
-    $p_status = '';  // Not Required in Delete
+    $p_status = '';  
     $p_User_id = '';
     $p_Client_name = '';
     $p_contact = '';
@@ -141,9 +212,11 @@ public function deleteInquiry($id)
 
     return response()->json([
         'message' => $actionMessage[0]->action_message ?? '',
-        'affected_rows' => $affectedRows[0]->affected_rows ?? 0
+        'affected_rows' => $affectedRows[0]->affected_rows ?? 0,
+        'status' => true
     ]);
 }
+
 
 public function getInquiryByClient($client_id)
 {
