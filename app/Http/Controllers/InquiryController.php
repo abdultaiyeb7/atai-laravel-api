@@ -49,57 +49,177 @@ class InquiryController extends Controller
         ]);
     }
 
-    public function updateInquiry(Request $request)
+//     public function updateInquiry(Request $request)
+// {
+//     $actionType = 'U'; // For Update
+//     $p_id = $request->input('p_id');
+//     $statusDescription = $request->input('p_status'); // Pass status name from frontend
+//     $p_User_id = $request->input('p_User_id');
+//     $p_Client_name = $request->input('p_Client_name');
+//     $p_contact = $request->input('p_contact');
+//     $p_email = $request->input('p_email');
+//     $p_last_question = $request->input('p_last_question');
+//     $p_agent_remarks = $request->input('p_agent_remarks');
+//     $p_Next_followup = $request->input('p_Next_followup');
+//     $p_page_size = 10;
+//     $p_page = 1;
+//     $p_Client_id = 0;
+
+//     // Fetch Status Code from status table
+//     $statusCode = DB::table('status')
+//         ->where('description', $statusDescription)
+//         ->where('entity', 'INQ')   // INQ for inquiry status
+//         ->value('code');
+
+//     if (!$statusCode) {
+//         return response()->json(['message' => 'Invalid Status Description'], 400);
+//     }
+
+//     // Call Stored Procedure
+//     $result = DB::select('CALL manage_inquiry(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
+//         $actionType,
+//         $p_id,
+//         $statusCode,  // Pass code not description
+//         $p_User_id,
+//         $p_Client_name,
+//         $p_contact,
+//         $p_email,
+//         $p_last_question,
+//         $p_agent_remarks,
+//         $p_Next_followup,
+//         $p_page_size,
+//         $p_page,
+//         $p_Client_id
+//     ]);
+
+//     $actionMessage = DB::select('SELECT @action_message as action_message');
+//     $affectedRows = DB::select('SELECT @affected_rows as affected_rows');
+
+//     return response()->json([
+//         'data' => $result,
+//         'message' => $actionMessage[0]->action_message ?? '',
+//         'affected_rows' => $affectedRows[0]->affected_rows ?? 0
+//     ]);
+// }
+
+public function updateInquiry(Request $request)
 {
-    $actionType = 'U'; // For Update
-    $p_id = $request->input('p_id');
-    $statusDescription = $request->input('p_status'); // Pass status name from frontend
-    $p_User_id = $request->input('p_User_id');
-    $p_Client_name = $request->input('p_Client_name');
-    $p_contact = $request->input('p_contact');
-    $p_email = $request->input('p_email');
-    $p_last_question = $request->input('p_last_question');
-    $p_agent_remarks = $request->input('p_agent_remarks');
-    $p_Next_followup = $request->input('p_Next_followup');
-    $p_page_size = 10;
-    $p_page = 1;
-    $p_Client_id = 0;
+    try {
+        $actionType = 'U'; // For Update
+        $p_id = $request->input('p_id');
+        
+        // Validate required fields
+        if (!$p_id) {
+            return response()->json(['message' => 'Inquiry ID is required'], 400);
+        }
 
-    // Fetch Status Code from status table
-    $statusCode = DB::table('status')
-        ->where('description', $statusDescription)
-        ->where('entity', 'INQ')   // INQ for inquiry status
-        ->value('code');
+        // Get current inquiry data
+        $currentInquiry = DB::table('inquiry')->where('id', $p_id)->first();
+        
+        if (!$currentInquiry) {
+            return response()->json(['message' => 'Inquiry not found'], 404);
+        }
 
-    if (!$statusCode) {
-        return response()->json(['message' => 'Invalid Status Description'], 400);
+        // Check if the current status is one of the restricted statuses
+        $restrictedStatuses = ['No Response from Client so Closed', 'Closed', 'Resolved and Closed'];
+        $currentStatus = DB::table('status')
+                        ->where('code', $currentInquiry->status)
+                        ->where('entity', 'INQ')
+                        ->value('description');
+        
+        if (in_array($currentStatus, $restrictedStatuses)) {
+            return response()->json([
+                'message' => 'Cannot update inquiry with status: ' . $currentStatus
+            ], 400);
+        }
+
+        // Get inputs - only status, agent_remarks, and next_followup are updatable
+        $statusDescription = $request->input('p_status');
+        $p_agent_remarks = $request->input('p_agent_remarks');
+        $p_Next_followup = $request->input('p_Next_followup');
+
+        // Validate at least one field is being updated
+        if (!$statusDescription && !$p_agent_remarks && !$p_Next_followup) {
+            return response()->json(['message' => 'At least one field (status, agent_remarks, or next_followup) must be provided for update'], 400);
+        }
+
+        // If status is being updated, validate it
+        $statusCode = null;
+        if ($statusDescription) {
+            $statusCode = DB::table('status')
+                ->where('description', $statusDescription)
+                ->where('entity', 'INQ')
+                ->value('code');
+
+            if (!$statusCode) {
+                return response()->json(['message' => 'Invalid Status Description'], 400);
+            }
+        } else {
+            // Keep the current status if not being updated
+            $statusCode = $currentInquiry->status;
+        }
+
+        // Use current values for fields that aren't being updated
+        // Using null coalescing operator to handle potential null values
+        $p_User_id = $currentInquiry->user_id ?? $currentInquiry->User_id ?? null;
+        $p_Client_name = $currentInquiry->client_name ?? $currentInquiry->Client_name ?? null;
+        $p_contact = $currentInquiry->contact ?? null;
+        $p_email = $currentInquiry->email ?? null;
+        $p_last_question = $currentInquiry->last_question ?? $currentInquiry->last_question ?? null;
+        $p_Client_id = $currentInquiry->client_id ?? $currentInquiry->Client_id ?? 0;
+        
+        // If next_followup isn't provided, keep the current value or set to null if allowed
+        if (!$p_Next_followup) {
+            $p_Next_followup = $currentInquiry->next_followup ?? $currentInquiry->Next_followup ?? null;
+        }
+
+        // Handle agent remarks
+        $agentRemarks = $p_agent_remarks ?? $currentInquiry->agent_remarks ?? $currentInquiry->agent_remarks ?? null;
+
+        // Pagination parameters (not used for update but required by the procedure)
+        $p_page_size = 10;
+        $p_page = 1;
+
+        // Call Stored Procedure
+        $result = DB::select('CALL manage_inquiry(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
+            $actionType,
+            $p_id,
+            $statusCode,
+            $p_User_id,
+            $p_Client_name,
+            $p_contact,
+            $p_email,
+            $p_last_question,
+            $agentRemarks,
+            $p_Next_followup,
+            $p_page_size,
+            $p_page,
+            $p_Client_id
+        ]);
+
+        $actionMessage = DB::select('SELECT @action_message as action_message');
+        $affectedRows = DB::select('SELECT @affected_rows as affected_rows');
+
+        if (($affectedRows[0]->affected_rows ?? 0) === 0) {
+            return response()->json([
+                'message' => 'No changes made to the inquiry',
+                'affected_rows' => 0
+            ], 200);
+        }
+
+        return response()->json([
+            'data' => $result,
+            'message' => $actionMessage[0]->action_message ?? 'Inquiry updated successfully',
+            'affected_rows' => $affectedRows[0]->affected_rows ?? 1
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Failed to update inquiry',
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString() // Only include this in development
+        ], 500);
     }
-
-    // Call Stored Procedure
-    $result = DB::select('CALL manage_inquiry(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
-        $actionType,
-        $p_id,
-        $statusCode,  // Pass code not description
-        $p_User_id,
-        $p_Client_name,
-        $p_contact,
-        $p_email,
-        $p_last_question,
-        $p_agent_remarks,
-        $p_Next_followup,
-        $p_page_size,
-        $p_page,
-        $p_Client_id
-    ]);
-
-    $actionMessage = DB::select('SELECT @action_message as action_message');
-    $affectedRows = DB::select('SELECT @affected_rows as affected_rows');
-
-    return response()->json([
-        'data' => $result,
-        'message' => $actionMessage[0]->action_message ?? '',
-        'affected_rows' => $affectedRows[0]->affected_rows ?? 0
-    ]);
 }
 
 
