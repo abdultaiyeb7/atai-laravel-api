@@ -136,3 +136,6 @@ Route::post('/manage-inquiry', [InquiryController::class, 'manageInquiry']);
 
 Route::put('/update-inquiry', [InquiryController::class, 'updateInquiry']);
 
+
+Route::delete('/inquiry/{id}', [InquiryController::class, 'deleteInquiry']);
+

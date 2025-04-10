@@ -102,4 +102,47 @@ class InquiryController extends Controller
     ]);
 }
 
+
+public function deleteInquiry($id)
+{
+    $actionType = 'D';  // For Delete
+    $p_id = $id;
+    $p_status = '';  // Not Required in Delete
+    $p_User_id = '';
+    $p_Client_name = '';
+    $p_contact = '';
+    $p_email = '';
+    $p_last_question = 0;
+    $p_agent_remarks = '';
+    $p_Next_followup = null;
+    $p_page_size = 10;
+    $p_page = 1;
+    $p_Client_id = 0;
+
+    // Call Stored Procedure
+    $result = DB::select('CALL manage_inquiry(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
+        $actionType,
+        $p_id,
+        $p_status,
+        $p_User_id,
+        $p_Client_name,
+        $p_contact,
+        $p_email,
+        $p_last_question,
+        $p_agent_remarks,
+        $p_Next_followup,
+        $p_page_size,
+        $p_page,
+        $p_Client_id
+    ]);
+
+    $actionMessage = DB::select('SELECT @action_message as action_message');
+    $affectedRows = DB::select('SELECT @affected_rows as affected_rows');
+
+    return response()->json([
+        'message' => $actionMessage[0]->action_message ?? '',
+        'affected_rows' => $affectedRows[0]->affected_rows ?? 0
+    ]);
+}
+
 }
