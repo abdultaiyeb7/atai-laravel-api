@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\InquiryController;
 
 use App\Http\Controllers\ChatbotControllerapi;
 
@@ -124,4 +125,12 @@ Route::post('/submit_details', [ChatbotControllerapi::class, 'submitDetails']);
 
 
 Route::get('/in-progress-count', [TicketController::class, 'getInProgressTicketsCount']);
+
+
+
+
+Route::post('/manage-inquiry', [InquiryController::class, 'manageInquiry']);
+
+
+
 
