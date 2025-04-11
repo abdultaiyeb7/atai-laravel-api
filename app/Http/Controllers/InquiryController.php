@@ -355,6 +355,10 @@ public function getInquiryByClient($client_id)
         $p_page = 1;         // You can make it dynamic
         $p_Client_id = $client_id;
 
+
+        $p_page_size = request()->input('page_size', 10);   // Dynamic page size
+        $p_page = request()->input('page', 1);             // Dynamic page number
+        $p_Client_id = $client_id;
         // Call Stored Procedure
         $result = DB::select('CALL manage_inquiry(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
             $actionType,
