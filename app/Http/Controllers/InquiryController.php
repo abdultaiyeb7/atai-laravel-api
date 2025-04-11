@@ -338,6 +338,71 @@ public function deleteInquiry($id)
 }
 
 
+// public function getInquiryByClient($client_id)
+// {
+//     try {
+//         $actionType = 'G';  // For Get
+//         $p_id = null;
+//         $p_status = null;
+//         $p_User_id = null;
+//         $p_Client_name = null;
+//         $p_contact = null;
+//         $p_email = null;
+//         $p_last_question = null;
+//         $p_agent_remarks = null;
+//         $p_Next_followup = null;
+//         // $p_page_size = 10;   // You can make it dynamic
+//         // $p_page = 1;         // You can make it dynamic
+//         // $p_Client_id = $client_id;
+
+
+//         $p_page_size = request()->input('page_size', 10);   // Dynamic page size
+//         $p_page = request()->input('page', 1);             // Dynamic page number
+//         $p_Client_id = $client_id;
+//         // Call Stored Procedure
+//         $result = DB::select('CALL manage_inquiry(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
+//             $actionType,
+//             $p_id,
+//             $p_status,
+//             $p_User_id,
+//             $p_Client_name,
+//             $p_contact,
+//             $p_email,
+//             $p_last_question,
+//             $p_agent_remarks,
+//             $p_Next_followup,
+//             $p_page_size,
+//             $p_page,
+//             $p_Client_id
+//         ]);
+
+//         $actionMessage = DB::select('SELECT @action_message as action_message');
+//         $affectedRows = DB::select('SELECT @affected_rows as affected_rows');
+
+//         if (empty($result)) {
+//             return response()->json([
+//                 'status' => false,
+//                 'message' => 'No records found for this Client ID.',
+//                 'data' => []
+//             ], 404);
+//         }
+
+//         return response()->json([
+//             'status' => true,
+//             'message' => $actionMessage[0]->action_message ?? 'Records fetched successfully.',
+//             'data' => $result
+//         ]);
+
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => false,
+//             'message' => 'Something went wrong!',
+//             'error' => $e->getMessage()
+//         ], 500);
+//     }
+// }
+
+
 public function getInquiryByClient($client_id)
 {
     try {
@@ -351,15 +416,12 @@ public function getInquiryByClient($client_id)
         $p_last_question = null;
         $p_agent_remarks = null;
         $p_Next_followup = null;
-        // $p_page_size = 10;   // You can make it dynamic
-        // $p_page = 1;         // You can make it dynamic
-        // $p_Client_id = $client_id;
-
 
         $p_page_size = request()->input('page_size', 10);   // Dynamic page size
         $p_page = request()->input('page', 1);             // Dynamic page number
         $p_Client_id = $client_id;
-        // Call Stored Procedure
+
+        // Fetch all records without pagination
         $result = DB::select('CALL manage_inquiry(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
             $actionType,
             $p_id,
@@ -371,8 +433,8 @@ public function getInquiryByClient($client_id)
             $p_last_question,
             $p_agent_remarks,
             $p_Next_followup,
-            $p_page_size,
-            $p_page,
+            1000000, // Very large page size to fetch all inquiries
+            1,       // First page to get all
             $p_Client_id
         ]);
 
@@ -387,10 +449,22 @@ public function getInquiryByClient($client_id)
             ], 404);
         }
 
+        // Sort globally by created_at (or the timestamp column name)
+        usort($result, function ($a, $b) {
+            return strtotime($b->created_at) <=> strtotime($a->created_at);
+        });
+
+        // Paginate manually after sorting
+        $offset = ($p_page - 1) * $p_page_size;
+        $paginatedData = array_slice($result, $offset, $p_page_size);
+
         return response()->json([
             'status' => true,
             'message' => $actionMessage[0]->action_message ?? 'Records fetched successfully.',
-            'data' => $result
+            'data' => $paginatedData,
+            'total_records' => count($result),
+            'page' => $p_page,
+            'page_size' => $p_page_size,
         ]);
 
     } catch (\Exception $e) {
