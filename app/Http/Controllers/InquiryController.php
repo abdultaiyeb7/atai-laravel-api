@@ -351,9 +351,9 @@ public function getInquiryByClient($client_id)
         $p_last_question = null;
         $p_agent_remarks = null;
         $p_Next_followup = null;
-        $p_page_size = 10;   // You can make it dynamic
-        $p_page = 1;         // You can make it dynamic
-        $p_Client_id = $client_id;
+        // $p_page_size = 10;   // You can make it dynamic
+        // $p_page = 1;         // You can make it dynamic
+        // $p_Client_id = $client_id;
 
 
         $p_page_size = request()->input('page_size', 10);   // Dynamic page size
