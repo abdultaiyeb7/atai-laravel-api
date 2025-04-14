@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\UserInquiry;
 
 class InquiryController extends Controller
 {
@@ -531,6 +532,36 @@ public function getInquiryByClient($client_id)
     }
 }
 
+public function getUserInquiry($user_id)
+{
+    try {
+        // Find the user inquiry data
+        $inquiry = UserInquiry::where('user_id', $user_id)
+            ->select('client_name', 'contact', 'email', 'last_question')
+            ->first();
+
+        if (!$inquiry) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No inquiry found for this user ID',
+                'data' => null
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User inquiry data retrieved successfully',
+            'data' => $inquiry
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to retrieve user inquiry data',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
 
 
 
