@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\UserInquiry;
 
+use App\Models\QuestionText; // Add this for the Question model
+
+
 class InquiryController extends Controller
 {
     public function manageInquiry(Request $request)
@@ -532,12 +535,46 @@ public function getInquiryByClient($client_id)
     }
 }
 
+// public function getUserInquiry($user_id)
+// {
+//     try {
+//         // Find the user inquiry data
+//         $inquiry = UserInquiry::where('user_id', $user_id)
+//             ->select('client_name', 'contact', 'email')
+//             ->first();
+
+//         if (!$inquiry) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'No inquiry found for this user ID',
+//                 'data' => null
+//             ], 404);
+//         }
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'User inquiry data retrieved successfully',
+//             'data' => $inquiry
+//         ]);
+
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Failed to retrieve user inquiry data',
+//             'error' => $e->getMessage()
+//         ], 500);
+//     }
+// }
+
 public function getUserInquiry($user_id)
 {
     try {
-        // Find the user inquiry data
-        $inquiry = UserInquiry::where('user_id', $user_id)
-            ->select('client_name', 'contact', 'email')
+        // Find the user inquiry data with question relationship
+        $inquiry = UserInquiry::with(['lastQuestion' => function($query) {
+                $query->select('id', 'question_text');
+            }])
+            ->where('user_id', $user_id)
+            ->select('id', 'client_name', 'contact', 'email', 'last_question')
             ->first();
 
         if (!$inquiry) {
@@ -548,10 +585,21 @@ public function getUserInquiry($user_id)
             ], 404);
         }
 
+        // Format the response
+        $response = [
+            'client_name' => $inquiry->client_name,
+            'contact' => $inquiry->contact,
+            'email' => $inquiry->email,
+            'last_question' => [
+                'id' => $inquiry->last_question,
+                'text' => $inquiry->lastQuestion->question_text ?? null
+            ]
+        ];
+
         return response()->json([
             'status' => 'success',
             'message' => 'User inquiry data retrieved successfully',
-            'data' => $inquiry
+            'data' => $response
         ]);
 
     } catch (\Exception $e) {
@@ -562,7 +610,5 @@ public function getUserInquiry($user_id)
         ], 500);
     }
 }
-
-
 
 }
