@@ -477,5 +477,61 @@ public function getInquiryByClient($client_id)
 }
 
 
+    // public function getStatusCount($client_id)
+    // {
+    //     try {
+    //         $results = DB::select("
+    //             SELECT inq.status, COUNT(inq.status) AS status_count
+    //             FROM inquiry inq
+    //             INNER JOIN questions qu ON qu.id = inq.last_question
+    //             WHERE qu.client_id = ?
+    //             GROUP BY inq.status
+    //         ", [$client_id]);
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'data' => $results
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Error fetching status count',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
+    public function getStatusCount($client_id)
+{
+    try {
+        // Get status-wise count
+        $statusCounts = DB::select("
+            SELECT inq.status, COUNT(inq.status) AS status_count
+            FROM inquiry inq
+            INNER JOIN questions qu ON qu.id = inq.last_question
+            WHERE qu.client_id = ?
+            GROUP BY inq.status
+        ", [$client_id]);
+
+        // Calculate total count from status-wise result
+        $totalCount = collect($statusCounts)->sum('status_count');
+
+        return response()->json([
+            'success' => true,
+            'total_count' => $totalCount,
+            'data' => $statusCounts
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching status count',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+
 
 }

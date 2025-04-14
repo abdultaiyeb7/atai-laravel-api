@@ -141,3 +141,6 @@ Route::delete('/inquiry/{id}', [InquiryController::class, 'deleteInquiry']);
 
 Route::get('/inquiries/{client_id}', [InquiryController::class, 'getInquiryByClient']);
 
+
+Route::get('/inquiry/status-count/{client_id}', [InquiryController::class, 'getStatusCount']);
+
