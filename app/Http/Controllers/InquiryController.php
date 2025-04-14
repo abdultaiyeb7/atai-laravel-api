@@ -537,7 +537,7 @@ public function getUserInquiry($user_id)
     try {
         // Find the user inquiry data
         $inquiry = UserInquiry::where('user_id', $user_id)
-            ->select('client_name', 'contact', 'email', 'last_question')
+            ->select('client_name', 'contact', 'email')
             ->first();
 
         if (!$inquiry) {

@@ -15,8 +15,7 @@ class UserInquiry extends Model
         'user_id',
         'client_name',
         'contact',
-        'email',
-        'last_question'
+        'email'
         // Add other fields as needed
     ];
 }
