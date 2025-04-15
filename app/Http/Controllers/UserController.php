@@ -178,12 +178,55 @@ DB::table('user_data')->updateOrInsert(
 //     }
 // }
 
+// public function updatePassword(Request $request)
+// {
+//     // Validate input
+//     $validator = Validator::make($request->all(), [
+//         'user_id' => 'required|exists:user_data,user_id',
+//         'password' => 'required|min:6|confirmed',
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Validation failed!',
+//             'errors' => $validator->errors()
+//         ], 422);
+//     }
+
+//     try {
+//         // Hash the password before storing
+//         $hashedPassword = Hash::make($request->password);
+
+//         // Update password in user_data table
+//         DB::table('user_data')
+//             ->where('user_id', $request->user_id)
+//             ->update(['password' => $hashedPassword]);
+
+//         // ✅ Also update the user's status to active (1) in the users table
+//         DB::table('users')
+//             ->where('user_id', $request->user_id)
+//             ->update(['status' => 1]);
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'Password updated successfully!',
+//         ]);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Database error!',
+//             'error_details' => $e->getMessage()
+//         ], 500);
+//     }
+// }
+
 public function updatePassword(Request $request)
 {
     // Validate input
     $validator = Validator::make($request->all(), [
-        'user_id' => 'required|exists:user_data,user_id',
-        'password' => 'required|min:6|confirmed',
+        'user_id' => 'required|exists:users,user_id',  // Changed from user_data to users
+        'token' => 'required|min:6|confirmed',         // Changed from password to token
     ]);
 
     if ($validator->fails()) {
@@ -195,22 +238,20 @@ public function updatePassword(Request $request)
     }
 
     try {
-        // Hash the password before storing
-        $hashedPassword = Hash::make($request->password);
+        // Hash the token before storing (if you want to hash it, otherwise remove this line)
+        $hashedToken = Hash::make($request->token);
 
-        // Update password in user_data table
-        DB::table('user_data')
-            ->where('user_id', $request->user_id)
-            ->update(['password' => $hashedPassword]);
-
-        // ✅ Also update the user's status to active (1) in the users table
+        // Update token in users table
         DB::table('users')
             ->where('user_id', $request->user_id)
-            ->update(['status' => 1]);
+            ->update([
+                'token' => $hashedToken,  // Changed from password to token
+                'status' => 1             // Moved the status update here
+            ]);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Password updated successfully!',
+            'message' => 'Token updated successfully!',  // Updated message
         ]);
     } catch (\Exception $e) {
         return response()->json([
@@ -222,13 +263,12 @@ public function updatePassword(Request $request)
 }
 
 
-
 public function getUserCredentials($user_id)
 {
     try {
         // Fetch user credentials from user_data table
-        $user = DB::table('user_data')
-            ->select('email as username', 'password')
+        $user = DB::table('users')
+            ->select('email as username', 'token')
             ->where('user_id', $user_id)
             ->first();
 
@@ -254,12 +294,69 @@ public function getUserCredentials($user_id)
 }
 
 
+// public function verifyUserCredentials(Request $request)
+// {
+//     // Validate input
+//     $validator = Validator::make($request->all(), [
+//         'email' => 'required|email',
+//         'password' => 'required'
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Validation failed!',
+//             'errors' => $validator->errors()
+//         ], 422);
+//     }
+
+//     try {
+//         // Fetch user credentials from user_data table
+//         $user = DB::table('user_data')
+//             ->select('user_id', 'email as username', 'password')
+//             ->where('email', $request->email)
+//             ->first();
+
+//         // Check if user exists
+//         if (!$user) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'User not found!',
+//             ], 404);
+//         }
+
+//         // Verify the password
+//         if (!Hash::check($request->password, $user->password)) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'Incorrect password!',
+//             ], 401);
+//         }
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'Login successful!',
+//             'data' => [
+//                 'user_id' => $user->user_id,
+//                 'username' => $user->username,
+//             ]
+//         ]);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Database error!',
+//             'error_details' => $e->getMessage()
+//         ], 500);
+//     }
+// }
+
+
 public function verifyUserCredentials(Request $request)
 {
     // Validate input
     $validator = Validator::make($request->all(), [
         'email' => 'required|email',
-        'password' => 'required'
+        'token' => 'required'  // Changed from password to token
     ]);
 
     if ($validator->fails()) {
@@ -271,9 +368,9 @@ public function verifyUserCredentials(Request $request)
     }
 
     try {
-        // Fetch user credentials from user_data table
-        $user = DB::table('user_data')
-            ->select('user_id', 'email as username', 'password')
+        // Fetch user credentials from users table (changed from user_data)
+        $user = DB::table('users')
+            ->select('user_id', 'email as username', 'token')  // Changed password to token
             ->where('email', $request->email)
             ->first();
 
@@ -285,11 +382,11 @@ public function verifyUserCredentials(Request $request)
             ], 404);
         }
 
-        // Verify the password
-        if (!Hash::check($request->password, $user->password)) {
+        // Verify the token (changed from password)
+        if (!Hash::check($request->token, $user->token)) {  // Changed password to token
             return response()->json([
                 'status' => 'error',
-                'message' => 'Incorrect password!',
+                'message' => 'Incorrect token!',  // Changed message
             ], 401);
         }
 
@@ -309,7 +406,6 @@ public function verifyUserCredentials(Request $request)
         ], 500);
     }
 }
-
 
     /**
      * Update User
@@ -422,7 +518,7 @@ public function verifyUserCredentials(Request $request)
         ]);
 
         // Delete from user_data table
-        DB::table('user_data')->where('user_id', $userId)->delete();
+        DB::table('users')->where('user_id', $userId)->delete();
 
         // Fetch stored procedure message
         $messageResult = DB::select('SELECT @message as message');
