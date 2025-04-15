@@ -26,6 +26,7 @@ class UserInquiry extends Model
     protected $table = 'inquiry';
 
     protected $fillable = [
+        'id',
         'user_id',
         'client_name',
         'contact',

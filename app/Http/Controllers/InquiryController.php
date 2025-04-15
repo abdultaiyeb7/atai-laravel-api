@@ -587,6 +587,7 @@ public function getUserInquiry($user_id)
 
         // Format the response
         $response = [
+            'id' => $inquiry->id,
             'client_name' => $inquiry->client_name,
             'contact' => $inquiry->contact,
             'email' => $inquiry->email,
