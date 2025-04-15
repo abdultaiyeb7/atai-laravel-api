@@ -12,116 +12,6 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
 
-// public function manageUser(Request $request)
-// {
-//     // Validate input
-//     $validator = Validator::make($request->all(), [
-//         'p_mobile' => 'required|digits:10',
-//         'p_email' => 'nullable|email',
-//         'p_user_name' => 'required|string|max:255',
-//     ], [
-//         'p_mobile.required' => 'Mobile number is required.',
-//         'p_mobile.digits' => 'Mobile number must be exactly 10 digits.',
-//         'p_email.email' => 'Invalid email format.',
-//         'p_user_name.required' => 'User name is required.',
-//     ]);
-
-//     if ($validator->fails()) {
-//         return response()->json([
-//             'status' => 'error',
-//             'message' => 'Validation failed!',
-//             'errors' => $validator->errors()
-//         ], 422);
-//     }
-
-//     $action = $request->input('p_action');
-//     $userId = $request->input('p_user_id', 0);
-//     $message = '';
-
-//     try {
-       
-//         $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?, ?, ?)', [
-//             $action,
-//             $userId,
-//             $request->input('p_user_name'),
-//             $request->input('p_email'),
-//             $request->input('p_mobile'),
-//             $request->input('p_profile_pic'),
-//             $request->input('p_status'),
-//             '',
-//             $request->input('p_otp'),
-//             $request->input('p_is_verified'),
-//             $request->input('p_is_available'),
-//             $request->input('P_pannumber'),
-//             $request->input('p_DocPath'),
-//             $request->input('p_role_abbreviation'),
-//             $request->input('p_ClientId'),
-//             $request->input('p_page_size'), // newly added
-//             $request->input('p_page'),      // newly added
-//         ]);
-        
-
-//         // Fetch stored procedure message
-//         $messageResult = DB::select('SELECT @message as message');
-//         $message = $messageResult[0]->message ?? 'Operation completed successfully.';
-
-//         // Retrieve the latest user ID
-//         $latestUser = DB::table('users')->orderBy('user_id', 'desc')->first();
-//         $latestUserId = $latestUser ? $latestUser->user_id : 633; 
-
-//         // Insert into user_data table
-//       // Insert into user_data table
-// DB::table('user_data')->updateOrInsert(
-//     ['user_id' => $latestUserId], 
-//     [
-//         'name' => $latestUser->name ?? $request->input('p_user_name'),
-//         'role' => $request->input('p_role_abbreviation'),
-//         'email' => $request->input('p_email'),
-//         'password' => '' // Use empty string instead of NULL to avoid SQL error
-//     ]
-// );
-
-
-//         // Construct verification link
-//         // $verificationLink = url("http://localhost:3000/setup-password/{$latestUserId}");
-
-//                     $verificationLink = url("https://dev.atai.admin.raghavsolars.com/setup-password/{$latestUserId}");
-
-
-//         // Send email if email is provided
-//         if ($request->filled('p_email')) {
-//             $emailData = [
-//                 'subject' => 'Verify Your Email for Agent Registration',
-//                 'name' => $request->input('p_user_name'),
-//                 'verification_link' => $verificationLink,
-//                 'message' => "Dear {$request->input('p_user_name')},<br><br>
-//                     You have been added as an agent on ATai Chatbot. Please verify your email to complete the registration.<br>
-//                     Click the link below to verify your email:<br>
-//                     <a href='{$verificationLink}'>Verify Email</a><br><br>
-//                     Best regards,<br>
-//                     [Admin Name]"
-//             ];
-
-//             Mail::to($request->input('p_email'))->send(new SendMail($emailData));
-//         }
-
-//         return response()->json([
-//             'status' => 'success',
-//             'message' => $message,
-//             'verification_link' => $verificationLink, 
-//             'data' => $result
-//         ]);
-//     } catch (\Exception $e) {
-//         return response()->json([
-//             'status' => 'error',
-//             'message' => 'Database error!',
-//             'error_details' => $e->getMessage()
-//         ], 500);
-//     }
-// }
-
-
-
 public function manageUser(Request $request)
 {
     // Validate input
@@ -150,6 +40,24 @@ public function manageUser(Request $request)
 
     try {
         // Call the stored procedure
+        // $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?)', [
+        //     $action,
+        //     $userId,
+        //     $request->input('p_user_name'),
+        //     $request->input('p_email'),
+        //     $request->input('p_mobile'),
+        //     $request->input('p_profile_pic'),
+        //     $request->input('p_status'),
+        //     '',
+        //     $request->input('p_otp'),
+        //     $request->input('p_is_verified'),
+        //     $request->input('p_is_available'),
+        //     $request->input('P_pannumber'),
+        //     $request->input('p_DocPath'),
+        //     $request->input('p_role_abbreviation'),
+        //     $request->input('p_ClientId'),
+        // ]);
+
         $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?, ?, ?)', [
             $action,
             $userId,
@@ -166,10 +74,11 @@ public function manageUser(Request $request)
             $request->input('p_DocPath'),
             $request->input('p_role_abbreviation'),
             $request->input('p_ClientId'),
-            $request->input('p_page_size'),
-            $request->input('p_page'),
+            $request->input('p_page_size'), // newly added
+            $request->input('p_page'),      // newly added
         ]);
         
+
         // Fetch stored procedure message
         $messageResult = DB::select('SELECT @message as message');
         $message = $messageResult[0]->message ?? 'Operation completed successfully.';
@@ -178,8 +87,23 @@ public function manageUser(Request $request)
         $latestUser = DB::table('users')->orderBy('user_id', 'desc')->first();
         $latestUserId = $latestUser ? $latestUser->user_id : 633; 
 
+        // Insert into user_data table
+      // Insert into user_data table
+DB::table('user_data')->updateOrInsert(
+    ['user_id' => $latestUserId], 
+    [
+        'name' => $latestUser->name ?? $request->input('p_user_name'),
+        'role' => $request->input('p_role_abbreviation'),
+        'email' => $request->input('p_email'),
+        'password' => '' // Use empty string instead of NULL to avoid SQL error
+    ]
+);
+
+
         // Construct verification link
-        $verificationLink = url(path: "https://dev.atai.admin.raghavsolars.com/setup-password/{$latestUserId}");
+        // $verificationLink = url("http://localhost:3000/setup-password/{$latestUserId}");
+
+                    $verificationLink = url("https://dev.atai.admin.raghavsolars.com/setup-password/{$latestUserId}");
 
 
         // Send email if email is provided
@@ -215,12 +139,51 @@ public function manageUser(Request $request)
 }
 
 
+
+// public function updatePassword(Request $request)
+// {
+//     // Validate input
+//     $validator = Validator::make($request->all(), [
+//         'user_id' => 'required|exists:user_data,user_id',
+//         'password' => 'required|min:6|confirmed',
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Validation failed!',
+//             'errors' => $validator->errors()
+//         ], 422);
+//     }
+
+//     try {
+//         // Hash the password before storing
+//         $hashedPassword = Hash::make($request->password);
+
+//         // Update password in user_data table
+//         DB::table('user_data')
+//             ->where('user_id', $request->user_id)
+//             ->update(['password' => $hashedPassword]);
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'Password updated successfully!',
+//         ]);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Database error!',
+//             'error_details' => $e->getMessage()
+//         ], 500);
+//     }
+// }
+
 public function updatePassword(Request $request)
 {
     // Validate input
     $validator = Validator::make($request->all(), [
-        'user_id' => 'required|exists:users,user_id',
-        'token' => 'required|min:6|confirmed',
+        'user_id' => 'required|exists:user_data,user_id',
+        'password' => 'required|min:6|confirmed',
     ]);
 
     if ($validator->fails()) {
@@ -236,9 +199,9 @@ public function updatePassword(Request $request)
         $hashedPassword = Hash::make($request->password);
 
         // Update password in user_data table
-        DB::table('users')
+        DB::table('user_data')
             ->where('user_id', $request->user_id)
-            ->update(['token' => $hashedPassword]);
+            ->update(['password' => $hashedPassword]);
 
         // ✅ Also update the user's status to active (1) in the users table
         DB::table('users')
@@ -264,7 +227,7 @@ public function getUserCredentials($user_id)
 {
     try {
         // Fetch user credentials from user_data table
-        $user = DB::table('users')
+        $user = DB::table('user_data')
             ->select('email as username', 'password')
             ->where('user_id', $user_id)
             ->first();
@@ -296,7 +259,7 @@ public function verifyUserCredentials(Request $request)
     // Validate input
     $validator = Validator::make($request->all(), [
         'email' => 'required|email',
-        'token' => 'required'
+        'password' => 'required'
     ]);
 
     if ($validator->fails()) {
@@ -309,8 +272,8 @@ public function verifyUserCredentials(Request $request)
 
     try {
         // Fetch user credentials from user_data table
-        $user = DB::table('users')
-            ->select('user_id', 'email as username', 'token')
+        $user = DB::table('user_data')
+            ->select('user_id', 'email as username', 'password')
             ->where('email', $request->email)
             ->first();
 
@@ -323,7 +286,7 @@ public function verifyUserCredentials(Request $request)
         }
 
         // Verify the password
-        if (!Hash::check($request->token, $user->token)) {
+        if (!Hash::check($request->password, $user->password)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Incorrect password!',
