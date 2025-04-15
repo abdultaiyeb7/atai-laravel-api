@@ -11,93 +11,6 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    /**
-     * Manage User (Insert/Update)
-     */
-   
-//     public function manageUser(Request $request)
-// {
-//     // Validate input
-//     $validator = Validator::make($request->all(), [
-//         'p_mobile' => 'required|digits:10',
-//         'p_email' => 'nullable|email',
-//         'p_user_name' => 'required|string|max:255',
-//     ], [
-//         'p_mobile.required' => 'Mobile number is required.',
-//         'p_mobile.digits' => 'Mobile number must be exactly 10 digits.',
-//         'p_email.email' => 'Invalid email format.',
-//         'p_user_name.required' => 'User name is required.',
-//     ]);
-
-//     // Return validation errors if any
-//     if ($validator->fails()) {
-//         return response()->json([
-//             'status' => 'error',
-//             'message' => 'Validation failed!',
-//             'errors' => $validator->errors()
-//         ], 422);
-//     }
-
-//     $action = $request->input('p_action');
-//     $userId = $request->input('p_user_id', 0);
-//     $message = '';
-
-//     try {
-//         // Call the stored procedure
-//         $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?)', [
-//             $action,
-//             $userId,
-//             $request->input('p_user_name'),
-//             $request->input('p_email'),
-//             $request->input('p_mobile'),
-//             $request->input('p_profile_pic'),
-//             $request->input('p_status'),
-//             '', // Passing empty string instead of NULL for p_token
-//             $request->input('p_otp'),
-//             $request->input('p_is_verified'),
-//             $request->input('p_is_available'),
-//             $request->input('P_pannumber'),
-//             $request->input('p_DocPath'),
-//             $request->input('p_role_abbreviation'),
-//             $request->input('p_ClientId'),
-//         ]);
-
-//         // Fetch stored procedure message
-//         $messageResult = DB::select('SELECT @message as message');
-//         $message = $messageResult[0]->message ?? 'Operation completed successfully.';
-
-//         // Send email notification if email is provided
-//         if ($request->filled('p_email')) {
-//             $verificationLink = url('/verify-email?email=' . urlencode($request->input('p_email')));
-
-//             $emailData = [
-//                 'subject' => 'Verify Your Email for Agent Registration',
-//                 'name' => $request->input('p_user_name'),
-//                 'verification_link' => $verificationLink,
-//                 'message' => "Dear {$request->input('p_user_name')},<br><br>
-//                     You have been added as an agent on ATai Chatbot. Please verify your email to complete the registration.<br>
-//                     Click the link below to verify your email:<br>
-//                     <a href='{$verificationLink}'>Verify Email</a><br><br>
-//                     Best regards,<br>
-//                     [Admin Name]"
-//             ];
-
-//             Mail::to($request->input('p_email'))->send(new SendMail($emailData));
-//         }
-
-//         return response()->json([
-//             'status' => 'success',
-//             'message' => $message,
-//             'data' => $result
-//         ]);
-//     } catch (\Exception $e) {
-//         return response()->json([
-//             'status' => 'error',
-//             'message' => 'Database error!',
-//             'error_details' => $e->getMessage()
-//         ], 500);
-//     }
-// }
 
 // public function manageUser(Request $request)
 // {
@@ -113,7 +26,6 @@ class UserController extends Controller
 //         'p_user_name.required' => 'User name is required.',
 //     ]);
 
-//     // Return validation errors if any
 //     if ($validator->fails()) {
 //         return response()->json([
 //             'status' => 'error',
@@ -127,8 +39,8 @@ class UserController extends Controller
 //     $message = '';
 
 //     try {
-//         // Call the stored procedure
-//         $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?)', [
+       
+//         $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?, ?, ?)', [
 //             $action,
 //             $userId,
 //             $request->input('p_user_name'),
@@ -136,7 +48,7 @@ class UserController extends Controller
 //             $request->input('p_mobile'),
 //             $request->input('p_profile_pic'),
 //             $request->input('p_status'),
-//             '', // Passing empty string instead of NULL for p_token
+//             '',
 //             $request->input('p_otp'),
 //             $request->input('p_is_verified'),
 //             $request->input('p_is_available'),
@@ -144,20 +56,39 @@ class UserController extends Controller
 //             $request->input('p_DocPath'),
 //             $request->input('p_role_abbreviation'),
 //             $request->input('p_ClientId'),
+//             $request->input('p_page_size'), // newly added
+//             $request->input('p_page'),      // newly added
 //         ]);
+        
 
 //         // Fetch stored procedure message
 //         $messageResult = DB::select('SELECT @message as message');
 //         $message = $messageResult[0]->message ?? 'Operation completed successfully.';
 
-//         // Retrieve the latest user ID (using correct column name 'user_id')
-//         $latestUser = DB::table('users')->orderBy('user_id', 'desc')->first(); 
-//         $latestUserId = $latestUser ? $latestUser->user_id : 633; // Default to 633 if no user exists
+//         // Retrieve the latest user ID
+//         $latestUser = DB::table('users')->orderBy('user_id', 'desc')->first();
+//         $latestUserId = $latestUser ? $latestUser->user_id : 633; 
 
-//         // Construct the verification link with user ID
-//         $verificationLink = url("http://localhost:3000/setup-password/{$latestUserId}");
+//         // Insert into user_data table
+//       // Insert into user_data table
+// DB::table('user_data')->updateOrInsert(
+//     ['user_id' => $latestUserId], 
+//     [
+//         'name' => $latestUser->name ?? $request->input('p_user_name'),
+//         'role' => $request->input('p_role_abbreviation'),
+//         'email' => $request->input('p_email'),
+//         'password' => '' // Use empty string instead of NULL to avoid SQL error
+//     ]
+// );
 
-//         // Send email notification if email is provided
+
+//         // Construct verification link
+//         // $verificationLink = url("http://localhost:3000/setup-password/{$latestUserId}");
+
+//                     $verificationLink = url("https://dev.atai.admin.raghavsolars.com/setup-password/{$latestUserId}");
+
+
+//         // Send email if email is provided
 //         if ($request->filled('p_email')) {
 //             $emailData = [
 //                 'subject' => 'Verify Your Email for Agent Registration',
@@ -177,7 +108,7 @@ class UserController extends Controller
 //         return response()->json([
 //             'status' => 'success',
 //             'message' => $message,
-//             'verification_link' => $verificationLink, // Return verification link for debugging
+//             'verification_link' => $verificationLink, 
 //             'data' => $result
 //         ]);
 //     } catch (\Exception $e) {
@@ -188,6 +119,8 @@ class UserController extends Controller
 //         ], 500);
 //     }
 // }
+
+
 
 public function manageUser(Request $request)
 {
@@ -217,24 +150,6 @@ public function manageUser(Request $request)
 
     try {
         // Call the stored procedure
-        // $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?)', [
-        //     $action,
-        //     $userId,
-        //     $request->input('p_user_name'),
-        //     $request->input('p_email'),
-        //     $request->input('p_mobile'),
-        //     $request->input('p_profile_pic'),
-        //     $request->input('p_status'),
-        //     '',
-        //     $request->input('p_otp'),
-        //     $request->input('p_is_verified'),
-        //     $request->input('p_is_available'),
-        //     $request->input('P_pannumber'),
-        //     $request->input('p_DocPath'),
-        //     $request->input('p_role_abbreviation'),
-        //     $request->input('p_ClientId'),
-        // ]);
-
         $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?, ?, ?)', [
             $action,
             $userId,
@@ -251,11 +166,10 @@ public function manageUser(Request $request)
             $request->input('p_DocPath'),
             $request->input('p_role_abbreviation'),
             $request->input('p_ClientId'),
-            $request->input('p_page_size'), // newly added
-            $request->input('p_page'),      // newly added
+            $request->input('p_page_size'),
+            $request->input('p_page'),
         ]);
         
-
         // Fetch stored procedure message
         $messageResult = DB::select('SELECT @message as message');
         $message = $messageResult[0]->message ?? 'Operation completed successfully.';
@@ -264,23 +178,8 @@ public function manageUser(Request $request)
         $latestUser = DB::table('users')->orderBy('user_id', 'desc')->first();
         $latestUserId = $latestUser ? $latestUser->user_id : 633; 
 
-        // Insert into user_data table
-      // Insert into user_data table
-DB::table('user_data')->updateOrInsert(
-    ['user_id' => $latestUserId], 
-    [
-        'name' => $latestUser->name ?? $request->input('p_user_name'),
-        'role' => $request->input('p_role_abbreviation'),
-        'email' => $request->input('p_email'),
-        'password' => '' // Use empty string instead of NULL to avoid SQL error
-    ]
-);
-
-
         // Construct verification link
-        // $verificationLink = url("http://localhost:3000/setup-password/{$latestUserId}");
-
-                    $verificationLink = url("https://dev.atai.admin.raghavsolars.com/setup-password/{$latestUserId}");
+        $verificationLink = url(path: "https://dev.atai.admin.raghavsolars.com/setup-password/{$latestUserId}");
 
 
         // Send email if email is provided
@@ -316,51 +215,12 @@ DB::table('user_data')->updateOrInsert(
 }
 
 
-
-// public function updatePassword(Request $request)
-// {
-//     // Validate input
-//     $validator = Validator::make($request->all(), [
-//         'user_id' => 'required|exists:user_data,user_id',
-//         'password' => 'required|min:6|confirmed',
-//     ]);
-
-//     if ($validator->fails()) {
-//         return response()->json([
-//             'status' => 'error',
-//             'message' => 'Validation failed!',
-//             'errors' => $validator->errors()
-//         ], 422);
-//     }
-
-//     try {
-//         // Hash the password before storing
-//         $hashedPassword = Hash::make($request->password);
-
-//         // Update password in user_data table
-//         DB::table('user_data')
-//             ->where('user_id', $request->user_id)
-//             ->update(['password' => $hashedPassword]);
-
-//         return response()->json([
-//             'status' => 'success',
-//             'message' => 'Password updated successfully!',
-//         ]);
-//     } catch (\Exception $e) {
-//         return response()->json([
-//             'status' => 'error',
-//             'message' => 'Database error!',
-//             'error_details' => $e->getMessage()
-//         ], 500);
-//     }
-// }
-
 public function updatePassword(Request $request)
 {
     // Validate input
     $validator = Validator::make($request->all(), [
-        'user_id' => 'required|exists:user_data,user_id',
-        'password' => 'required|min:6|confirmed',
+        'user_id' => 'required|exists:users,user_id',
+        'token' => 'required|min:6|confirmed',
     ]);
 
     if ($validator->fails()) {
@@ -376,9 +236,9 @@ public function updatePassword(Request $request)
         $hashedPassword = Hash::make($request->password);
 
         // Update password in user_data table
-        DB::table('user_data')
+        DB::table('users')
             ->where('user_id', $request->user_id)
-            ->update(['password' => $hashedPassword]);
+            ->update(['token' => $hashedPassword]);
 
         // ✅ Also update the user's status to active (1) in the users table
         DB::table('users')
