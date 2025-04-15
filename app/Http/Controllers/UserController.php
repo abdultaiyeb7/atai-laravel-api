@@ -264,7 +264,7 @@ public function getUserCredentials($user_id)
 {
     try {
         // Fetch user credentials from user_data table
-        $user = DB::table('user_data')
+        $user = DB::table('users')
             ->select('email as username', 'password')
             ->where('user_id', $user_id)
             ->first();
@@ -296,7 +296,7 @@ public function verifyUserCredentials(Request $request)
     // Validate input
     $validator = Validator::make($request->all(), [
         'email' => 'required|email',
-        'password' => 'required'
+        'token' => 'required'
     ]);
 
     if ($validator->fails()) {
@@ -309,8 +309,8 @@ public function verifyUserCredentials(Request $request)
 
     try {
         // Fetch user credentials from user_data table
-        $user = DB::table('user_data')
-            ->select('user_id', 'email as username', 'password')
+        $user = DB::table('users')
+            ->select('user_id', 'email as username', 'token')
             ->where('email', $request->email)
             ->first();
 
@@ -323,7 +323,7 @@ public function verifyUserCredentials(Request $request)
         }
 
         // Verify the password
-        if (!Hash::check($request->password, $user->password)) {
+        if (!Hash::check($request->token, $user->token)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Incorrect password!',
