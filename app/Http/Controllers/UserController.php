@@ -540,10 +540,10 @@ public function getUserCredentials($user_id)
 
 public function verifyUserCredentials(Request $request)
 {
-    // Step 1: Validate the request data
+    // Validate input
     $validator = Validator::make($request->all(), [
         'email' => 'required|email',
-        'token' => 'required'
+        'password' => 'required'
     ]);
 
     if ($validator->fails()) {
@@ -555,13 +555,13 @@ public function verifyUserCredentials(Request $request)
     }
 
     try {
-        // Step 2: Retrieve the user by email
-        $user = DB::table('users')
-            ->select('user_id', 'email as username', 'token')
+        // Fetch user credentials from user_data table
+        $user = DB::table('user_data')
+            ->select('user_id', 'email as username', 'password')
             ->where('email', $request->email)
             ->first();
 
-        // Step 3: Check if user exists
+        // Check if user exists
         if (!$user) {
             return response()->json([
                 'status' => 'error',
@@ -569,15 +569,14 @@ public function verifyUserCredentials(Request $request)
             ], 404);
         }
 
-        // Step 4: Compare the hashed token
-        if (!Hash::check($request->token, $user->token)) {
+        // Verify the password
+        if (!Hash::check($request->password, $user->password)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Incorrect token!',
+                'message' => 'Incorrect password!',
             ], 401);
         }
 
-        // Step 5: Return success response
         return response()->json([
             'status' => 'success',
             'message' => 'Login successful!',
@@ -587,7 +586,6 @@ public function verifyUserCredentials(Request $request)
             ]
         ]);
     } catch (\Exception $e) {
-        // Step 6: Handle exceptions
         return response()->json([
             'status' => 'error',
             'message' => 'Database error!',
@@ -595,6 +593,7 @@ public function verifyUserCredentials(Request $request)
         ], 500);
     }
 }
+
 
     /**
      * Update User
