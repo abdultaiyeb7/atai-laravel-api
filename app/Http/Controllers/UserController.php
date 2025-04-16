@@ -375,7 +375,7 @@ public function updatePassword(Request $request)
         DB::table('users')
             ->where('user_id', $request->user_id)
             ->update([
-                'password' => $hashedPassword,
+                'token' => $hashedPassword,
                 'status' => 1
             ]);
 
