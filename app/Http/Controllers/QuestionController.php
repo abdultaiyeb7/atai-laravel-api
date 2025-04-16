@@ -253,7 +253,12 @@ public function deleteQuestion(Request $request)
         $result = DB::select('SELECT @message AS message');
         $message = $result[0]->message;
 
-        return response()->json(['message' => $message], 200);
+        // return response()->json(['message' => $message], 200);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Delete successful!'
+        ], 200);
+
 
     } catch (\Exception $e) {
         return response()->json(['message' => $e->getMessage()], 500);
