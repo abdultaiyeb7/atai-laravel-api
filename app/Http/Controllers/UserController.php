@@ -164,6 +164,19 @@ public function manageUser(Request $request)
     $userId = $request->input('p_user_id', 0);
     $message = '';
 
+    if ($action === 'I' && $request->filled('p_email')) {
+        $existingEmail = DB::table('users')
+            ->where('email', $request->input('p_email'))
+            ->exists();
+
+        if ($existingEmail) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Email already exists.',
+            ], 409); // 409 = Conflict
+        }
+    }
+
     try {
         // Call the stored procedure
         $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?, ?, ?)', [
