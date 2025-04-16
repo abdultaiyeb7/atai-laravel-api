@@ -538,6 +538,62 @@ public function getUserCredentials($user_id)
 //     }
 // }
 
+// public function verifyUserCredentials(Request $request)
+// {
+//     // Validate input
+//     $validator = Validator::make($request->all(), [
+//         'email' => 'required|email',
+//         'password' => 'required'
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Validation failed!',
+//             'errors' => $validator->errors()
+//         ], 422);
+//     }
+
+//     try {
+//         // Fetch user credentials from user_data table
+//         $user = DB::table('user_data')
+//             ->select('user_id', 'email as username', 'password')
+//             ->where('email', $request->email)
+//             ->first();
+
+//         // Check if user exists
+//         if (!$user) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'User not found!',
+//             ], 404);
+//         }
+
+//         // Verify the password
+//         if (!Hash::check($request->password, $user->password)) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'Incorrect password!',
+//             ], 401);
+//         }
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'Login successful!',
+//             'data' => [
+//                 'user_id' => $user->user_id,
+//                 'username' => $user->username,
+//             ]
+//         ]);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Database error!',
+//             'error_details' => $e->getMessage()
+//         ], 500);
+//     }
+// }
+
 public function verifyUserCredentials(Request $request)
 {
     // Validate input
@@ -555,9 +611,9 @@ public function verifyUserCredentials(Request $request)
     }
 
     try {
-        // Fetch user credentials from user_data table
-        $user = DB::table('user_data')
-            ->select('user_id', 'email as username', 'password')
+        // Fetch user credentials from the updated 'users' table
+        $user = DB::table('users')
+            ->select('user_id', 'email as username', 'token')
             ->where('email', $request->email)
             ->first();
 
@@ -569,8 +625,8 @@ public function verifyUserCredentials(Request $request)
             ], 404);
         }
 
-        // Verify the password
-        if (!Hash::check($request->password, $user->password)) {
+        // Verify the token instead of password
+        if (!Hash::check($request->password, $user->token)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Incorrect password!',
@@ -593,6 +649,7 @@ public function verifyUserCredentials(Request $request)
         ], 500);
     }
 }
+
 
 
     /**
