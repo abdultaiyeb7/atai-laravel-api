@@ -311,12 +311,52 @@ public function manageUser(Request $request)
 //     }
 // }
 
+// public function updatePassword(Request $request)
+// {
+//     // Validate input
+//     $validator = Validator::make($request->all(), [
+//         'user_id' => 'required|exists:users,user_id',  // Changed from user_data to users
+//         'token' => 'required|min:6|confirmed',         // Changed from password to token
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Validation failed!',
+//             'errors' => $validator->errors()
+//         ], 422);
+//     }
+
+//     try {
+//         // Hash the token before storing (if you want to hash it, otherwise remove this line)
+//         $hashedToken = Hash::make($request->token);
+
+//         // Update token in users table
+//         DB::table('users')
+//             ->where('user_id', $request->user_id)
+//             ->update([
+//                 'token' => $hashedToken,  // Changed from password to token
+//                 'status' => 1             // Moved the status update here
+//             ]);
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'Token updated successfully!',  // Updated message
+//         ]);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Database error!',
+//             'error_details' => $e->getMessage()
+//         ], 500);
+//     }
+// }
 public function updatePassword(Request $request)
 {
     // Validate input
     $validator = Validator::make($request->all(), [
-        'user_id' => 'required|exists:users,user_id',  // Changed from user_data to users
-        'token' => 'required|min:6|confirmed',         // Changed from password to token
+        'user_id' => 'required|exists:users,user_id',
+        'password' => 'required|min:6|confirmed',
     ]);
 
     if ($validator->fails()) {
@@ -328,20 +368,20 @@ public function updatePassword(Request $request)
     }
 
     try {
-        // Hash the token before storing (if you want to hash it, otherwise remove this line)
-        $hashedToken = Hash::make($request->token);
+        // Hash the password
+        $hashedPassword = Hash::make($request->password);
 
-        // Update token in users table
+        // Update password in users table
         DB::table('users')
             ->where('user_id', $request->user_id)
             ->update([
-                'token' => $hashedToken,  // Changed from password to token
-                'status' => 1             // Moved the status update here
+                'password' => $hashedPassword,
+                'status' => 1
             ]);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Token updated successfully!',  // Updated message
+            'message' => 'Password updated successfully!',
         ]);
     } catch (\Exception $e) {
         return response()->json([
@@ -351,6 +391,7 @@ public function updatePassword(Request $request)
         ], 500);
     }
 }
+
 
 
 public function getUserCredentials($user_id)
