@@ -482,12 +482,68 @@ public function getUserCredentials($user_id)
 // }
 
 
+// public function verifyUserCredentials(Request $request)
+// {
+//     // Validate input
+//     $validator = Validator::make($request->all(), [
+//         'email' => 'required|email',
+//         'token' => 'required'  // Changed from password to token
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Validation failed!',
+//             'errors' => $validator->errors()
+//         ], 422);
+//     }
+
+//     try {
+//         // Fetch user credentials from users table (changed from user_data)
+//         $user = DB::table('users')
+//             ->select('user_id', 'email as username', 'token')  // Changed password to token
+//             ->where('email', $request->email)
+//             ->first();
+
+//         // Check if user exists
+//         if (!$user) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'User not found!',
+//             ], 404);
+//         }
+
+//         // Verify the token (changed from password)
+//         if (!Hash::check($request->token, $user->token)) {  // Changed password to token
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'Incorrect token!',  // Changed message
+//             ], 401);
+//         }
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'Login successful!',
+//             'data' => [
+//                 'user_id' => $user->user_id,
+//                 'username' => $user->username,
+//             ]
+//         ]);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Database error!',
+//             'error_details' => $e->getMessage()
+//         ], 500);
+//     }
+// }
+
 public function verifyUserCredentials(Request $request)
 {
-    // Validate input
+    // Step 1: Validate the request data
     $validator = Validator::make($request->all(), [
         'email' => 'required|email',
-        'token' => 'required'  // Changed from password to token
+        'token' => 'required'
     ]);
 
     if ($validator->fails()) {
@@ -499,13 +555,13 @@ public function verifyUserCredentials(Request $request)
     }
 
     try {
-        // Fetch user credentials from users table (changed from user_data)
+        // Step 2: Retrieve the user by email
         $user = DB::table('users')
-            ->select('user_id', 'email as username', 'token')  // Changed password to token
+            ->select('user_id', 'email as username', 'token')
             ->where('email', $request->email)
             ->first();
 
-        // Check if user exists
+        // Step 3: Check if user exists
         if (!$user) {
             return response()->json([
                 'status' => 'error',
@@ -513,14 +569,15 @@ public function verifyUserCredentials(Request $request)
             ], 404);
         }
 
-        // Verify the token (changed from password)
-        if (!Hash::check($request->token, $user->token)) {  // Changed password to token
+        // Step 4: Compare the hashed token
+        if (!Hash::check($request->token, $user->token)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Incorrect token!',  // Changed message
+                'message' => 'Incorrect token!',
             ], 401);
         }
 
+        // Step 5: Return success response
         return response()->json([
             'status' => 'success',
             'message' => 'Login successful!',
@@ -530,6 +587,7 @@ public function verifyUserCredentials(Request $request)
             ]
         ]);
     } catch (\Exception $e) {
+        // Step 6: Handle exceptions
         return response()->json([
             'status' => 'error',
             'message' => 'Database error!',
