@@ -7,6 +7,7 @@ use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\InquiryController;
+use App\Http\Controllers\ClientController;
 
 use App\Http\Controllers\ChatbotControllerapi;
 
@@ -145,3 +146,6 @@ Route::get('/inquiries/{client_id}', [InquiryController::class, 'getInquiryByCli
 Route::get('/inquiry/status-count/{client_id}', [InquiryController::class, 'getStatusCount']);
 
 Route::get('user-inquiry/{user_id}', [InquiryController::class, 'getUserInquiry']);
+
+Route::post('/insert-client', [ClientController::class, 'insertClient']);
+
