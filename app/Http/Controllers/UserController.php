@@ -12,6 +12,110 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
 
+// public function manageUser(Request $request)
+// {
+//     // Validate input
+//     $validator = Validator::make($request->all(), [
+//         'p_mobile' => 'required|digits:10',
+//         'p_email' => 'nullable|email',
+//         'p_user_name' => 'required|string|max:255',
+//     ], [
+//         'p_mobile.required' => 'Mobile number is required.',
+//         'p_mobile.digits' => 'Mobile number must be exactly 10 digits.',
+//         'p_email.email' => 'Invalid email format.',
+//         'p_user_name.required' => 'User name is required.',
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Validation failed!',
+//             'errors' => $validator->errors()
+//         ], 422);
+//     }
+
+//     $action = $request->input('p_action');
+//     $userId = $request->input('p_user_id', 0);
+//     $message = '';
+
+//     if ($action === 'I' && $request->filled('p_email')) {
+//         $existingEmail = DB::table('users')
+//             ->where('email', $request->input('p_email'))
+//             ->exists();
+
+//         if ($existingEmail) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'Email already exists.',
+//             ], 409); // 409 = Conflict
+//         }
+//     }
+
+//     try {
+//         // Call the stored procedure
+//         $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?, ?, ?)', [
+//             $action,
+//             $userId,
+//             $request->input('p_user_name'),
+//             $request->input('p_email'),
+//             $request->input('p_mobile'),
+//             $request->input('p_profile_pic'),
+//             $request->input('p_status'),
+//             '',
+//             $request->input('p_otp'),
+//             $request->input('p_is_verified'),
+//             $request->input('p_is_available'),
+//             $request->input('P_pannumber'),
+//             $request->input('p_DocPath'),
+//             $request->input('p_role_abbreviation'),
+//             $request->input('p_ClientId'),
+//             $request->input('p_page_size'),
+//             $request->input('p_page'),
+//         ]);
+        
+//         // Fetch stored procedure message
+//         $messageResult = DB::select('SELECT @message as message');
+//         $message = $messageResult[0]->message ?? 'Operation completed successfully.';
+
+//         // Retrieve the latest user ID
+//         $latestUser = DB::table('users')->orderBy('user_id', 'desc')->first();
+//         $latestUserId = $latestUser ? $latestUser->user_id : 633; 
+
+//         // Construct verification link
+//         $verificationLink = url("https://dev.atai.admin.raghavsolars.com/setup-password/{$latestUserId}");
+
+//         // Send email if email is provided
+//         if ($request->filled('p_email')) {
+//             $emailData = [
+//                 'subject' => 'Verify Your Email for Agent Registration',
+//                 'name' => $request->input('p_user_name'),
+//                 'verification_link' => $verificationLink,
+//                 'message' => "Dear {$request->input('p_user_name')},<br><br>
+//                     You have been added as an agent on ATai Chatbot. Please verify your email to complete the registration.<br>
+//                     Click the link below to verify your email:<br>
+//                     <a href='{$verificationLink}'>Verify Email</a><br><br>
+//                     Best regards,<br>
+//                     [Admin Name]"
+//             ];
+
+//             Mail::to($request->input('p_email'))->send(new SendMail($emailData));
+//         }
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => $message,
+//             'verification_link' => $verificationLink, 
+//             'data' => $result
+//         ]);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Database error!',
+//             'error_details' => $e->getMessage()
+//         ], 500);
+//     }
+// }
+
 public function manageUser(Request $request)
 {
     // Validate input
@@ -34,6 +138,7 @@ public function manageUser(Request $request)
         ], 422);
     }
 
+    // ✅ Define these before the try block so they are accessible inside
     $action = $request->input('p_action');
     $userId = $request->input('p_user_id', 0);
     $message = '';
@@ -72,19 +177,34 @@ public function manageUser(Request $request)
             $request->input('p_page_size'),
             $request->input('p_page'),
         ]);
-        
-        // Fetch stored procedure message
+
+        // Get stored procedure message
         $messageResult = DB::select('SELECT @message as message');
         $message = $messageResult[0]->message ?? 'Operation completed successfully.';
 
-        // Retrieve the latest user ID
+        // Get latest user ID
         $latestUser = DB::table('users')->orderBy('user_id', 'desc')->first();
-        $latestUserId = $latestUser ? $latestUser->user_id : 633; 
+        $latestUserId = $latestUser ? $latestUser->user_id : 633;
 
-        // Construct verification link
+        // ✅ Insert into clients table if role abbreviation is A
+        if ($request->input('p_role_abbreviation') === 'A') {
+            DB::table('clients')->insert([
+                'Name' => $request->input('p_user_name'),
+                'GSTIN' => $request->input('P_pannumber'),
+                'Email' => $request->input('p_email'),
+                'ContactNumber' => $request->input('p_mobile'),
+                'Address' => '', // You can change this if needed
+                'description' => '', // Optional
+                'NoofEmp' => 0,
+                'ProfilePhoto' => $request->input('p_profile_pic') ?? '', // ⬅ ensure it's never null
+            ]);
+        }
+        
+
+        // Verification link
         $verificationLink = url("https://dev.atai.admin.raghavsolars.com/setup-password/{$latestUserId}");
 
-        // Send email if email is provided
+        // Send email
         if ($request->filled('p_email')) {
             $emailData = [
                 'subject' => 'Verify Your Email for Agent Registration',
@@ -104,7 +224,7 @@ public function manageUser(Request $request)
         return response()->json([
             'status' => 'success',
             'message' => $message,
-            'verification_link' => $verificationLink, 
+            'verification_link' => $verificationLink,
             'data' => $result
         ]);
     } catch (\Exception $e) {
@@ -115,6 +235,7 @@ public function manageUser(Request $request)
         ], 500);
     }
 }
+
 
 public function updatePassword(Request $request)
 {
