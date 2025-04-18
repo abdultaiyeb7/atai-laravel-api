@@ -190,6 +190,62 @@ public function getUserCredentials($user_id)
     }
 }
 
+// public function verifyUserCredentials(Request $request)
+// {
+//     // Validate input (no client_id required)
+//     $validator = Validator::make($request->all(), [
+//         'email' => 'required|email',
+//         'password' => 'required',
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Validation failed!',
+//             'errors' => $validator->errors()
+//         ], 422);
+//     }
+
+//     try {
+//         // Fetch user by email
+//         $user = DB::table('users')
+//             ->select('user_id', 'email as username', 'token', 'ClientId')
+//             ->where('email', $request->email)
+//             ->first();
+
+//         if (!$user) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'User not found!',
+//             ], 404);
+//         }
+
+//         // Check if password matches the hashed token
+//         if (!Hash::check($request->password, $user->token)) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'Incorrect password!',
+//             ], 401);
+//         }
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'Login successful!',
+//             'data' => [
+//                 'user_id'   => $user->user_id,
+//                 'username'  => $user->username,
+//                 'client_id' => $user->ClientId,
+//             ]
+//         ]);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Database error!',
+//             'error_details' => $e->getMessage()
+//         ], 500);
+//     }
+// }
+
 public function verifyUserCredentials(Request $request)
 {
     // Validate input (no client_id required)
@@ -207,9 +263,9 @@ public function verifyUserCredentials(Request $request)
     }
 
     try {
-        // Fetch user by email
+        // Fetch user by email - now including abbreviation
         $user = DB::table('users')
-            ->select('user_id', 'email as username', 'token', 'ClientId')
+            ->select('user_id', 'email as username', 'token', 'ClientId', 'abbreviation')
             ->where('email', $request->email)
             ->first();
 
@@ -228,13 +284,23 @@ public function verifyUserCredentials(Request $request)
             ], 401);
         }
 
+        // Determine dashboard access based on abbreviation
+        $role = '';
+        if ($user->abbreviation === 'A') {
+            $role = 'admin';
+        } elseif ($user->abbreviation === 'S') {
+            $role = 'agent';
+        } 
+
         return response()->json([
             'status' => 'success',
             'message' => 'Login successful!',
             'data' => [
-                'user_id'   => $user->user_id,
-                'username'  => $user->username,
-                'client_id' => $user->ClientId,
+                'user_id'     => $user->user_id,
+                'username'   => $user->username,
+                'client_id'   => $user->ClientId,
+                'role'   => $role,
+                'abbreviation' => $user->abbreviation // optional, if you want to send it to frontend
             ]
         ]);
     } catch (\Exception $e) {
