@@ -152,3 +152,6 @@ Route::post('/insert-client', [ClientController::class, 'insertClient']);
 Route::get('/clients', [ClientController::class, 'getAllClients']);
 
 Route::delete('/client', [ClientController::class, 'deleteClientByEmail']);
+
+
+Route::put('/client/update', [ClientController::class, 'updateClient']);
