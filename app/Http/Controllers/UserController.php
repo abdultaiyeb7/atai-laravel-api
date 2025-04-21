@@ -404,6 +404,14 @@ public function verifyUserCredentials(Request $request)
 public function getUser(Request $request)
 {
     try {
+        $abbreviation = $request->query('p_abbreviation'); // ✅ Get abbreviation
+        if ($abbreviation !== 'S') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid abbreviation!',
+            ], 400);
+        }
+
         $userId = $request->query('p_user_id');
         $email = $request->query('p_email');
         $mobile = $request->query('p_mobile');
@@ -457,6 +465,64 @@ public function getUser(Request $request)
         ], 500);
     }
 }
+
+
+// public function getUser(Request $request)
+// {
+//     try {
+//         $userId = $request->query('p_user_id');
+//         $email = $request->query('p_email');
+//         $mobile = $request->query('p_mobile');
+//         $panNumber = $request->query('p_PANNumber');
+//         $clientId = $request->query('p_ClientId'); // ✅ Added Client ID
+//         $pageSize = $request->query('p_page_size', 10); // ✅ Default to 10 if not provided
+//         $page = $request->query('p_page', 1); // ✅ Default to 1 if not provided
+
+//         // Ensure NULL is passed for missing parameters
+//         $results = DB::select('CALL manage_user(?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, @message, NULL, NULL, NULL, ?, ?, ?)', [
+//             'G', // Action for GET
+//             $userId ?: NULL,
+//             $email ?: NULL,
+//             $mobile ?: NULL,
+//             $panNumber ?: NULL,
+//             $clientId ?: NULL ,// ✅ Passed Client ID to the stored procedure
+//             $pageSize,
+//             $page
+//         ]);
+
+//         // Fetch the output message
+//         $messageResult = DB::select("SELECT @message AS message");
+//         $message = $messageResult[0]->message ?? 'Something went wrong!';
+
+//         // ✅ Check if no user is found
+//         if (empty($results)) {
+//             // Check if the issue is with Client ID
+//             if ($clientId) {
+//                 return response()->json([
+//                     'status' => 'error',
+//                     'message' => 'Client ID not found!',
+//                 ], 404);
+//             }
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'User not found!',
+//             ], 404);
+//         }
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => $message,
+//             'data' => $results
+//         ]);
+
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Something went wrong!',
+//             'error_details' => $e->getMessage()
+//         ], 500);
+//     }
+// }
 
 public function deleteUserByEmail(Request $request)
 {
