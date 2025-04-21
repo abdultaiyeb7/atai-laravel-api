@@ -224,5 +224,34 @@ class ClientController extends Controller
             ], 500);
         }
     }
+
+    public function getAllClients(Request $request)
+{
+    try {
+        $clients = DB::table('clients')->select(
+            'id',
+            'Name',
+            'GSTIN',
+            'Email',
+            'ContactNumber',
+            'Address',
+            'description',
+            'NoofEmp',
+            'ProfilePhoto'
+        )->get();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'All clients fetched successfully',
+            'data' => $clients
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Exception: ' . $e->getMessage(),
+        ], 500);
+    }
+}
 }
 

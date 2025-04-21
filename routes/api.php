@@ -149,3 +149,5 @@ Route::get('user-inquiry/{user_id}', [InquiryController::class, 'getUserInquiry'
 
 Route::post('/insert-client', [ClientController::class, 'insertClient']);
 
+Route::get('/clients', [ClientController::class, 'getAllClients']);
+
