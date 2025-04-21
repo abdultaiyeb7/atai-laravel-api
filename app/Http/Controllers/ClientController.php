@@ -176,7 +176,7 @@ class ClientController extends Controller
                     'email'         => $validated['client_email'],
                     'mobile'        => $validated['client_contact_number'],
                     'profile_pic'   => $validated['client_profile_photo'] ?? '',
-                    'status'        => 1,
+                    'status'        => 0,
                     'token'         => '',
                     'otp'           => null,
                     'is_verified'   => 0,
