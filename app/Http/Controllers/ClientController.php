@@ -1,93 +1,5 @@
 <?php 
 
-// namespace App\Http\Controllers;
-
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\DB;
-// use Illuminate\Support\Str;
-// use Illuminate\Support\Facades\Log;
-
-// class ClientController extends Controller
-// {
-//     public function insertClient(Request $request)
-// {
-//     try {
-//         // Validate input
-//         $validated = $request->validate([
-//             'client_name' => 'required|string|max:300',
-//             'client_gstin' => 'nullable|string|max:50',
-//             'client_email' => 'required|email|max:300',
-//             'client_contact_number' => 'required|string|max:50',
-//             'client_address' => 'nullable|string|max:1500',
-//             'client_description' => 'nullable|string|max:1500',
-//             'client_no_of_emp' => 'nullable|integer',
-//             'client_profile_photo' => 'nullable|string|max:2000',
-//         ]);
-
-//         // Set default values for OUT parameters
-//         DB::statement("SET @client_id = 0;");
-//         DB::statement("SET @message = '';");
-
-//         // Now call the stored procedure
-//         DB::select("CALL manage_clients(
-//             :action_type,
-//             @client_id,
-//             :client_name,
-//             :client_gstin,
-//             :client_email,
-//             :client_contact_number,
-//             :client_address,
-//             :client_description,
-//             :client_no_of_emp,
-//             :client_profile_photo,
-//             @message,
-//             NULL,
-//             NULL
-//         )", [
-//             'action_type' => 'I',
-//             'client_name' => $validated['client_name'],
-//             'client_gstin' => $validated['client_gstin'],
-//             'client_email' => $validated['client_email'],
-//             'client_contact_number' => $validated['client_contact_number'],
-//             'client_address' => $validated['client_address'],
-//             'client_description' => $validated['client_description'],
-//             'client_no_of_emp' => $validated['client_no_of_emp'],
-//             'client_profile_photo' => $validated['client_profile_photo'],
-//         ]);
-
-//         // Fetch OUT parameters
-//           // ✅ 4. Fetch OUT parameter value
-//           $results = DB::select('SELECT @client_id as client_id');
-//           $clientId = $results[0]->client_id ?? null;
-
-//           // ✅ 5. Custom success/failure message in controller
-//           if ($clientId) {
-//               $message = 'Client added successfully with ID: ' . $clientId;
-//               $status = 'success';
-//           } else {
-//               $message = 'Failed to insert client.';
-//               $status = 'error';
-//           }
-
-//           // ✅ 6. Return JSON response
-//           return response()->json([
-//               'status' => $status,
-//               'data' => [
-//                   'client_id' => $clientId,
-//                   'message' => $message,
-//               ]
-//           ]);
-//     } catch (\Exception $e) {
-//         return response()->json([
-//             'status' => 'error',
-//             'message' => $e->getMessage(),
-//         ], 500);
-//     }
-// }
-
-// }
-
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -255,8 +167,9 @@ class ClientController extends Controller
             $clientId = $results[0]->client_id ?? null;
 
             if ($clientId) {
-                $token = Str::uuid()->toString(); // Still generate token for backend validation
+                // $token = Str::uuid()->toString(); // Still generate token for backend validation
 
+                $token = null;
                 // DB::table('users')->insert([
                     $userId = DB::table('users')->insertGetId([
                     'user_name'     => $validated['client_name'],
