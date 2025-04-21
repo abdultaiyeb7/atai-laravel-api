@@ -315,9 +315,11 @@ public function deleteClientByEmail(Request $request)
     ]);
 
     try {
+        DB::beginTransaction();
+
         $email = $request->input('email');
 
-        // Step 1: Find client by email
+        // Step 1: Get the client using email
         $client = DB::table('clients')->where('Email', $email)->first();
 
         if (!$client) {
@@ -329,11 +331,13 @@ public function deleteClientByEmail(Request $request)
 
         $clientId = $client->id;
 
-        // Step 2: Set SP variables
+        // Step 2: Delete user from users table
+        DB::table('users')->where('ClientId', $clientId)->delete();
+
+        // Step 3: Call stored procedure to delete client
         DB::statement("SET @client_id = ?", [$clientId]);
         DB::statement("SET @message = ''");
 
-        // Step 3: Call stored procedure to delete client
         DB::select("CALL manage_clients(
             :action_type,
             @client_id,
@@ -344,21 +348,22 @@ public function deleteClientByEmail(Request $request)
             'action_type' => 'D'
         ]);
 
-        // Step 4: Delete user by email
-        DB::table('users')->where('email', $email)->delete();
+        DB::commit();
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Client and associated user deleted successfully.'
+            'message' => 'Client and user deleted successfully.'
         ]);
-
     } catch (\Exception $e) {
+        DB::rollBack();
+
+        Log::error("Client Delete Error: " . $e->getMessage());
+
         return response()->json([
             'status' => 'error',
             'message' => 'Exception: ' . $e->getMessage()
         ], 500);
     }
 }
-
 }
 
