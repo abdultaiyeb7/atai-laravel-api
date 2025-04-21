@@ -254,6 +254,60 @@ class ClientController extends Controller
     }
 }
 
+// public function deleteClientByEmail(Request $request)
+// {
+//     $request->validate([
+//         'email' => 'required|email'
+//     ]);
+
+//     try {
+//         $email = $request->input('email');
+
+//         // Step 1: Get the client ID from email
+//         $client = DB::table('clients')->where('Email', $email)->first();
+
+//         if (!$client) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'Client not found for the given email.'
+//             ], 404);
+//         }
+
+//         $clientId = $client->id;
+
+//         // Step 2: Prepare session variables
+//         DB::statement("SET @client_id = ?", [$clientId]);
+//         DB::statement("SET @message = ''");
+
+//         // Step 3: Call the stored procedure with action_type = 'D'
+//         DB::select("CALL manage_clients(
+//             :action_type,
+//             @client_id,
+//             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+//             @message,
+//             NULL, NULL
+//         )", [
+//             'action_type' => 'D'
+//         ]);
+
+//         // Step 4: Delete the user based on email
+//         DB::table('users')->where('email', $email)->delete();
+
+//         // Step 5: Return success
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'Client and related user deleted successfully.'
+//         ]);
+
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Exception: ' . $e->getMessage()
+//         ], 500);
+//     }
+// }
+
+
 public function deleteClientByEmail(Request $request)
 {
     $request->validate([
@@ -263,7 +317,7 @@ public function deleteClientByEmail(Request $request)
     try {
         $email = $request->input('email');
 
-        // Step 1: Get the client ID from email
+        // Step 1: Find client by email
         $client = DB::table('clients')->where('Email', $email)->first();
 
         if (!$client) {
@@ -275,11 +329,11 @@ public function deleteClientByEmail(Request $request)
 
         $clientId = $client->id;
 
-        // Step 2: Prepare session variables
+        // Step 2: Set SP variables
         DB::statement("SET @client_id = ?", [$clientId]);
         DB::statement("SET @message = ''");
 
-        // Step 3: Call the stored procedure with action_type = 'D'
+        // Step 3: Call stored procedure to delete client
         DB::select("CALL manage_clients(
             :action_type,
             @client_id,
@@ -290,13 +344,12 @@ public function deleteClientByEmail(Request $request)
             'action_type' => 'D'
         ]);
 
-        // Step 4: Delete the user based on email
+        // Step 4: Delete user by email
         DB::table('users')->where('email', $email)->delete();
 
-        // Step 5: Return success
         return response()->json([
             'status' => 'success',
-            'message' => 'Client and related user deleted successfully.'
+            'message' => 'Client and associated user deleted successfully.'
         ]);
 
     } catch (\Exception $e) {
