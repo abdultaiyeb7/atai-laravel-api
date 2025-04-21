@@ -401,17 +401,10 @@ public function verifyUserCredentials(Request $request)
     }
 }
 
+
 public function getUser(Request $request)
 {
     try {
-        $abbreviation = $request->query('p_abbreviation'); // ✅ Get abbreviation
-        if ($abbreviation !== 'S') {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid abbreviation!',
-            ], 400);
-        }
-
         $userId = $request->query('p_user_id');
         $email = $request->query('p_email');
         $mobile = $request->query('p_mobile');
@@ -432,29 +425,27 @@ public function getUser(Request $request)
             $page
         ]);
 
+        // ✅ Filter only abbreviation 'S'
+        $filteredResults = array_filter($results, function ($item) {
+            return isset($item->abbreviation) && $item->abbreviation === 'S';
+        });
+
         // Fetch the output message
         $messageResult = DB::select("SELECT @message AS message");
         $message = $messageResult[0]->message ?? 'Something went wrong!';
 
-        // ✅ Check if no user is found
-        if (empty($results)) {
-            // Check if the issue is with Client ID
-            if ($clientId) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Client ID not found!',
-                ], 404);
-            }
+        // ✅ Check if no user is found after filtering
+        if (empty($filteredResults)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'User not found!',
+                'message' => 'No users found with abbreviation S!',
             ], 404);
         }
 
         return response()->json([
             'status' => 'success',
             'message' => $message,
-            'data' => $results
+            'data' => array_values($filteredResults) // ✅ Reset array keys
         ]);
 
     } catch (\Exception $e) {
@@ -465,7 +456,6 @@ public function getUser(Request $request)
         ], 500);
     }
 }
-
 
 // public function getUser(Request $request)
 // {
