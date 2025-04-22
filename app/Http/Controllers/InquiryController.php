@@ -695,16 +695,43 @@ public function getNewInquiries($client_id)
 }
 
 
+public function getRecentInquiries($client_id)
+{
+    $recentTime = Carbon::now()->subHours(24); // Last 24 hours
+
+    $inquiries = DB::table('inquiry as iq')
+        ->leftJoin('questions as qu', 'qu.id', '=', 'iq.last_question')
+        ->select('iq.*', 'qu.client_id')
+        ->where('qu.client_id', $client_id)
+        ->where('iq.status', 'OPN') // <-- filter by open status
+        ->where('iq.created_at', '>=', $recentTime)
+        ->orderBy('iq.created_at', 'desc')
+        ->get();
+
+    return response()->json([
+        'client_id' => $client_id,
+        'new_inquiries_count' => $inquiries->count(),
+        'recent_inquiries' => $inquiries
+    ]);
+ }
+
 // public function getRecentInquiries($client_id)
 // {
 //     $recentTime = Carbon::now()->subHours(24); // Last 24 hours
+
+//     $latestCreatedAt = DB::table('inquiry as iq')
+//         ->leftJoin('questions as qu', 'qu.id', '=', 'iq.last_question')
+//         ->where('qu.client_id', $client_id)
+//         ->where('iq.status', 'OPN')
+//         ->where('iq.created_at', '>=', $recentTime)
+//         ->max('iq.created_at'); // <-- Get the most recent creation time
 
 //     $inquiries = DB::table('inquiry as iq')
 //         ->leftJoin('questions as qu', 'qu.id', '=', 'iq.last_question')
 //         ->select('iq.*', 'qu.client_id')
 //         ->where('qu.client_id', $client_id)
-//         ->where('iq.status', 'OPN') // <-- filter by open status
-//         ->where('iq.created_at', '>=', $recentTime)
+//         ->where('iq.status', 'OPN')
+//         ->where('iq.created_at', $latestCreatedAt) // <-- Only the most recent one
 //         ->orderBy('iq.created_at', 'desc')
 //         ->get();
 
@@ -714,33 +741,6 @@ public function getNewInquiries($client_id)
 //         'recent_inquiries' => $inquiries
 //     ]);
 // }
-
-public function getRecentInquiries($client_id)
-{
-    $recentTime = Carbon::now()->subHours(24); // Last 24 hours
-
-    $latestCreatedAt = DB::table('inquiry as iq')
-        ->leftJoin('questions as qu', 'qu.id', '=', 'iq.last_question')
-        ->where('qu.client_id', $client_id)
-        ->where('iq.status', 'OPN')
-        ->where('iq.created_at', '>=', $recentTime)
-        ->max('iq.created_at'); // <-- Get the most recent creation time
-
-    $inquiries = DB::table('inquiry as iq')
-        ->leftJoin('questions as qu', 'qu.id', '=', 'iq.last_question')
-        ->select('iq.*', 'qu.client_id')
-        ->where('qu.client_id', $client_id)
-        ->where('iq.status', 'OPN')
-        ->where('iq.created_at', $latestCreatedAt) // <-- Only the most recent one
-        ->orderBy('iq.created_at', 'desc')
-        ->get();
-
-    return response()->json([
-        'client_id' => $client_id,
-        'new_inquiries_count' => $inquiries->count(),
-        'recent_inquiries' => $inquiries
-    ]);
-}
 
 
 
