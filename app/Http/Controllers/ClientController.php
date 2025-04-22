@@ -134,6 +134,17 @@ class ClientController extends Controller
                 'client_profile_photo' => 'nullable|string|max:2000',
             ]);
 
+            $existingClient = DB::table('clients')
+            ->where('Email', $validated['client_email'])
+            ->first();
+
+        if ($existingClient) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Client with this email already exists.'
+            ]);
+        }
+
             DB::statement("SET @client_id = 0;");
             DB::statement("SET @message = '';");
 
