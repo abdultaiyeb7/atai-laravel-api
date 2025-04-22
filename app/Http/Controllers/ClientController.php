@@ -193,11 +193,32 @@ class ClientController extends Controller
                 $setupLink = "https://dev.atai.admin.raghavsolars.com/setup-password/". $userId;
 
                 // Send email
-                Mail::raw("Hi {$validated['client_name']},\n\nWelcome to ATAI! Please set up your password by visiting the link below:\n\n$setupLink\n\nThanks,\nATAI Team", function ($message) use ($validated) {
+                // Mail::raw("Hi {$validated['client_name']},\n\nWelcome to ATAI! Please set up your password by visiting the link below:\n\n$setupLink\n\nThanks,\nATAI Team", function ($message) use ($validated) {
+                //     $message->to($validated['client_email'])
+                //             ->subject('Set up your password - ATAI');
+                // });
+                Mail::send([], [], function ($message) use ($validated, $setupLink) {
                     $message->to($validated['client_email'])
-                            ->subject('Set up your password - ATAI');
+                        ->subject('Set up your password - ATAI')
+                        ->setBody("
+                            <html>
+                                <body>
+                                    <p>Hi {$validated['client_name']},</p>
+                                    <p>Welcome to ATAI! Please set up your password by clicking the button below:</p>
+                                    <p>
+                                        <a href='{$setupLink}' 
+                                           style='display: inline-block; padding: 10px 20px; font-size: 16px; 
+                                                  color: white; background-color: #1a73e8; text-decoration: none; 
+                                                  border-radius: 5px;'>
+                                            Set Up Password
+                                        </a>
+                                    </p>
+                                    <p>Thanks,<br>ATAI Team</p>
+                                </body>
+                            </html>
+                        ", 'text/html');
                 });
-
+                
                 return response()->json([
                     'status' => 'success',
                     'data' => [
