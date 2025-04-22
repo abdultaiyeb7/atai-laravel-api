@@ -656,4 +656,25 @@ public function getNewInquiries($client_id)
     ]);
 }
 
+public function getRecentInquiries($client_id)
+    {
+        // Define how recent is "recent" — adjust as needed
+        $recentTime = Carbon::now()->subHours(24); // Last 24 hours
+
+        // Fetch recent inquiries with details
+        $inquiries = DB::table('inquiry as iq')
+            ->leftJoin('questions as qu', 'qu.id', '=', 'iq.last_question')
+            ->select('iq.*', 'qu.client_id')
+            ->where('qu.client_id', $client_id)
+            ->where('iq.created_at', '>=', $recentTime)
+            ->orderBy('iq.created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'client_id' => $client_id,
+            'new_inquiries_count' => $inquiries->count(),
+            'recent_inquiries' => $inquiries
+        ]);
+    }
+
 }
