@@ -612,4 +612,28 @@ public function getUserInquiry($user_id)
     }
 }
 
+
+public function getNotifications($client_id)
+{
+    try {
+        // Get count of "new" inquiries for a client (example: status = 'OPN')
+        $newInquiriesCount = DB::table('inquiry as iq')
+            ->leftJoin('questions as qu', 'qu.id', '=', 'iq.last_question')
+            ->where('qu.client_id', $client_id)
+            ->where('iq.status', 'OPN') // adjust this condition as needed
+            ->count();
+
+        return response()->json([
+            'new_inquiries_count' => $newInquiriesCount
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Something went wrong.',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
 }
