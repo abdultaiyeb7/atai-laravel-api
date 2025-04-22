@@ -157,4 +157,7 @@ Route::delete('/client', [ClientController::class, 'deleteClientByEmail']);
 Route::put('/client/update', [ClientController::class, 'updateClient']);
 
 
-Route::get('/client/{client_id}/notifications', [InquiryController::class, 'getNotifications']);
+// Route::get('/client/{client_id}/notifications', [InquiryController::class, 'getNotifications']);
+
+
+Route::get('/client/{client_id}/notifications', [InquiryController::class, 'getNewInquiries']);

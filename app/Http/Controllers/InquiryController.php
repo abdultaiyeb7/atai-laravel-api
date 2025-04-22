@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\UserInquiry;
+use Carbon\Carbon;
+
 
 use App\Models\QuestionText; // Add this for the Question model
 
@@ -613,27 +615,45 @@ public function getUserInquiry($user_id)
 }
 
 
-public function getNotifications($client_id)
+// public function getNotifications($client_id)
+// {
+//     try {
+//         // Get count of "new" inquiries for a client (example: status = 'OPN')
+//         $newInquiriesCount = DB::table('inquiry as iq')
+//             ->leftJoin('questions as qu', 'qu.id', '=', 'iq.last_question')
+//             ->where('qu.client_id', $client_id)
+//             ->where('iq.status', 'OPN') // adjust this condition as needed
+//             ->count();
+
+//         return response()->json([
+//             'new_inquiries_count' => $newInquiriesCount
+//         ], 200);
+
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'error' => 'Something went wrong.',
+//             'message' => $e->getMessage()
+//         ], 500);
+//     }
+// }
+
+
+public function getNewInquiries($client_id)
 {
-    try {
-        // Get count of "new" inquiries for a client (example: status = 'OPN')
-        $newInquiriesCount = DB::table('inquiry as iq')
-            ->leftJoin('questions as qu', 'qu.id', '=', 'iq.last_question')
-            ->where('qu.client_id', $client_id)
-            ->where('iq.status', 'OPN') // adjust this condition as needed
-            ->count();
+    // Define "recent" inquiries - adjust as needed
+    $recentTime = Carbon::now()->subHours(24); // last 24 hours
 
-        return response()->json([
-            'new_inquiries_count' => $newInquiriesCount
-        ], 200);
+    // Query new inquiries count
+    $count = DB::table('inquiry as iq')
+        ->leftJoin('questions as qu', 'qu.id', '=', 'iq.last_question')
+        ->where('qu.client_id', $client_id)
+        ->where('iq.created_at', '>=', $recentTime)
+        ->count();
 
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Something went wrong.',
-            'message' => $e->getMessage()
-        ], 500);
-    }
+    return response()->json([
+        'client_id' => $client_id,
+        'new_inquiries_count' => $count
+    ]);
 }
-
 
 }
