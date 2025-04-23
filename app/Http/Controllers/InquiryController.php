@@ -13,6 +13,86 @@ use App\Models\QuestionText; // Add this for the Question model
 
 class InquiryController extends Controller
 {
+    // public function manageInquiry(Request $request)
+    // {
+    //     try {
+    //         // Validate input
+    //         $validated = $request->validate([
+    //             'Client_name' => 'required|string|max:50',
+    //             'contact' => 'nullable|string|max:15',
+    //             'email' => 'nullable|string|email|max:100',
+    //             'last_question' => 'nullable|integer',
+    //             'agent_remarks' => 'nullable|string|max:5000',
+    //             'Next_followup' => 'nullable|date'
+    //         ]);
+    
+    //         // Default values
+    //         $status = 'opn';
+    //         $page_size = 0;
+    //         $page = 1;
+    
+    //         // Step 1: Get client_id from 'questions' table using last_question
+    //         $clientId = 1; // fallback default
+    //         if (!empty($validated['last_question'])) {
+    //             $clientIdFromQuestion = DB::table('questions')
+    //                 ->where('id', $validated['last_question'])
+    //                 ->value('client_id');
+    
+    //             if ($clientIdFromQuestion) {
+    //                 $clientId = $clientIdFromQuestion;
+    //             }
+    //         }
+    
+    //         // Step 2: Get max User_id based on last_question -> client_id
+    //         $maxUserId = DB::table('inquiry')
+    //             ->where('last_question', function ($query) use ($clientId) {
+    //                 $query->select('id')
+    //                       ->from('questions')
+    //                       ->where('client_id', $clientId)
+    //                       ->orderByDesc('id')
+    //                       ->limit(1);
+    //             })
+    //             ->select(DB::raw("MAX(CAST(User_id AS UNSIGNED)) as max_id"))
+    //             ->value('max_id');
+    
+    //         $nextUserId = str_pad((int)$maxUserId + 1, 4, '0', STR_PAD_LEFT);
+    
+    //         // Step 3: Call the stored procedure
+    //         $results = DB::select('CALL manage_inquiry(?, @p_id, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
+    //             'I',
+    //             $status,
+    //             $nextUserId,
+    //             $validated['Client_name'],
+    //             $validated['contact'] ?? null,
+    //             $validated['email'] ?? null,
+    //             $validated['last_question'] ?? null,
+    //             $validated['agent_remarks'] ?? null,
+    //             $validated['Next_followup'] ?? null,
+    //             $page_size,
+    //             $page,
+    //             $clientId
+    //         ]);
+    
+    //         // Get output values
+    //         $output = DB::select('SELECT @action_message as message, @affected_rows as affected')[0];
+    
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => $output->message,
+    //             'affected_rows' => $output->affected,
+    //             'User_id' => $nextUserId,
+    //             'Client_id' => $clientId
+    //         ], 201);
+    
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Error: ' . $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+    
+
     public function manageInquiry(Request $request)
     {
         $actionType = $request->input('action_type');
@@ -568,21 +648,39 @@ public function getInquiryByClient($client_id)
 //     }
 // }
 
-public function getUserInquiry($user_id)
+
+
+public function getUserInquiry(Request $request)
 {
     try {
-        // Find the user inquiry data with question relationship
+        // Extract values from request body
+        $user_id = $request->input('user_id');
+        $client_id = $request->input('client_id');
+
+        // Validate required inputs
+        if (!$user_id || !$client_id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'user_id and client_id are required.',
+                'data' => null
+            ], 422);
+        }
+
+        // Join inquiry with questions to filter by client_id from questions table
         $inquiry = UserInquiry::with(['lastQuestion' => function($query) {
                 $query->select('id', 'question_text');
             }])
             ->where('user_id', $user_id)
+            ->whereHas('lastQuestion', function ($query) use ($client_id) {
+                $query->where('client_id', $client_id);
+            })
             ->select('id', 'client_name', 'contact', 'email', 'last_question')
             ->first();
 
         if (!$inquiry) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'No inquiry found for this user ID',
+                'message' => 'No inquiry found for this user ID and client ID.',
                 'data' => null
             ], 404);
         }
@@ -613,6 +711,53 @@ public function getUserInquiry($user_id)
         ], 500);
     }
 }
+
+
+// public function getUserInquiry($user_id)
+// {
+//     try {
+//         // Find the user inquiry data with question relationship
+//         $inquiry = UserInquiry::with(['lastQuestion' => function($query) {
+//                 $query->select('id', 'question_text');
+//             }])
+//             ->where('user_id', $user_id)
+//             ->select('id', 'client_name', 'contact', 'email', 'last_question')
+//             ->first();
+
+//         if (!$inquiry) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'No inquiry found for this user ID',
+//                 'data' => null
+//             ], 404);
+//         }
+
+//         // Format the response
+//         $response = [
+//             'id' => $inquiry->id,
+//             'client_name' => $inquiry->client_name,
+//             'contact' => $inquiry->contact,
+//             'email' => $inquiry->email,
+//             'last_question' => [
+//                 'id' => $inquiry->last_question,
+//                 'text' => $inquiry->lastQuestion->question_text ?? null
+//             ]
+//         ];
+
+//         return response()->json([
+//             'status' => 'success',
+//             'message' => 'User inquiry data retrieved successfully',
+//             'data' => $response
+//         ]);
+
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Failed to retrieve user inquiry data',
+//             'error' => $e->getMessage()
+//         ], 500);
+//     }
+// }
 
 
 // public function getNotifications($client_id)
