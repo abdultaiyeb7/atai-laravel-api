@@ -13,127 +13,127 @@ use App\Models\QuestionText; // Add this for the Question model
 
 class InquiryController extends Controller
 {
-    // public function manageInquiry(Request $request)
-    // {
-    //     try {
-    //         // Validate input
-    //         $validated = $request->validate([
-    //             'Client_name' => 'required|string|max:50',
-    //             'contact' => 'nullable|string|max:15',
-    //             'email' => 'nullable|string|email|max:100',
-    //             'last_question' => 'nullable|integer',
-    //             'agent_remarks' => 'nullable|string|max:5000',
-    //             'Next_followup' => 'nullable|date'
-    //         ]);
-    
-    //         // Default values
-    //         $status = 'opn';
-    //         $page_size = 0;
-    //         $page = 1;
-    
-    //         // Step 1: Get client_id from 'questions' table using last_question
-    //         $clientId = 1; // fallback default
-    //         if (!empty($validated['last_question'])) {
-    //             $clientIdFromQuestion = DB::table('questions')
-    //                 ->where('id', $validated['last_question'])
-    //                 ->value('client_id');
-    
-    //             if ($clientIdFromQuestion) {
-    //                 $clientId = $clientIdFromQuestion;
-    //             }
-    //         }
-    
-    //         // Step 2: Get max User_id based on last_question -> client_id
-    //         $maxUserId = DB::table('inquiry')
-    //             ->where('last_question', function ($query) use ($clientId) {
-    //                 $query->select('id')
-    //                       ->from('questions')
-    //                       ->where('client_id', $clientId)
-    //                       ->orderByDesc('id')
-    //                       ->limit(1);
-    //             })
-    //             ->select(DB::raw("MAX(CAST(User_id AS UNSIGNED)) as max_id"))
-    //             ->value('max_id');
-    
-    //         $nextUserId = str_pad((int)$maxUserId + 1, 4, '0', STR_PAD_LEFT);
-    
-    //         // Step 3: Call the stored procedure
-    //         $results = DB::select('CALL manage_inquiry(?, @p_id, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
-    //             'I',
-    //             $status,
-    //             $nextUserId,
-    //             $validated['Client_name'],
-    //             $validated['contact'] ?? null,
-    //             $validated['email'] ?? null,
-    //             $validated['last_question'] ?? null,
-    //             $validated['agent_remarks'] ?? null,
-    //             $validated['Next_followup'] ?? null,
-    //             $page_size,
-    //             $page,
-    //             $clientId
-    //         ]);
-    
-    //         // Get output values
-    //         $output = DB::select('SELECT @action_message as message, @affected_rows as affected')[0];
-    
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => $output->message,
-    //             'affected_rows' => $output->affected,
-    //             'User_id' => $nextUserId,
-    //             'Client_id' => $clientId
-    //         ], 201);
-    
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Error: ' . $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-    
-
     public function manageInquiry(Request $request)
     {
-        $actionType = $request->input('action_type');
-        $p_id = $request->input('p_id') ?? 0;
-        $p_status = $request->input('p_status') ?? 'OPN';  // Default status 'OPN'
-        $p_User_id = $request->input('p_User_id');
-        $p_Client_name = $request->input('p_Client_name');
-        $p_contact = $request->input('p_contact');
-        $p_email = $request->input('p_email');
-        $p_last_question = $request->input('p_last_question');
-        $p_agent_remarks = $request->input('p_agent_remarks');
-        $p_Next_followup = $request->input('p_Next_followup');
-        $p_page_size = $request->input('p_page_size') ?? 10;
-        $p_page = $request->input('p_page') ?? 1;
-        $p_Client_id = $request->input('p_Client_id');
-
-        $result = DB::select('CALL manage_inquiry(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
-            $actionType,
-            $p_id,
-            $p_status,
-            $p_User_id,
-            $p_Client_name,
-            $p_contact,
-            $p_email,
-            $p_last_question,
-            $p_agent_remarks,
-            $p_Next_followup,
-            $p_page_size,
-            $p_page,
-            $p_Client_id
-        ]);
-
-        $actionMessage = DB::select('SELECT @action_message as action_message');
-        $affectedRows = DB::select('SELECT @affected_rows as affected_rows');
-
-        return response()->json([
-            'data' => $result,
-            'message' => $actionMessage[0]->action_message ?? '',
-            'affected_rows' => $affectedRows[0]->affected_rows ?? 0
-        ]);
+        try {
+            // Validate input
+            $validated = $request->validate([
+                'Client_name' => 'required|string|max:50',
+                'contact' => 'nullable|string|max:15',
+                'email' => 'nullable|string|email|max:100',
+                'last_question' => 'nullable|integer',
+                'agent_remarks' => 'nullable|string|max:5000',
+                'Next_followup' => 'nullable|date'
+            ]);
+    
+            // Default values
+            $status = 'OPN';
+            $page_size = 0;
+            $page = 1;
+    
+            // Step 1: Get client_id from 'questions' table using last_question
+            $clientId = 1; // fallback default
+            if (!empty($validated['last_question'])) {
+                $clientIdFromQuestion = DB::table('questions')
+                    ->where('id', $validated['last_question'])
+                    ->value('client_id');
+    
+                if ($clientIdFromQuestion) {
+                    $clientId = $clientIdFromQuestion;
+                }
+            }
+    
+            // Step 2: Get max User_id based on last_question -> client_id
+            $maxUserId = DB::table('inquiry')
+                ->where('last_question', function ($query) use ($clientId) {
+                    $query->select('id')
+                          ->from('questions')
+                          ->where('client_id', $clientId)
+                          ->orderByDesc('id')
+                          ->limit(1);
+                })
+                ->select(DB::raw("MAX(CAST(User_id AS UNSIGNED)) as max_id"))
+                ->value('max_id');
+    
+            $nextUserId = str_pad((int)$maxUserId + 1, 4, '0', STR_PAD_LEFT);
+    
+            // Step 3: Call the stored procedure
+            $results = DB::select('CALL manage_inquiry(?, @p_id, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
+                'I',
+                $status,
+                $nextUserId,
+                $validated['Client_name'],
+                $validated['contact'] ?? null,
+                $validated['email'] ?? null,
+                $validated['last_question'] ?? null,
+                $validated['agent_remarks'] ?? null,
+                $validated['Next_followup'] ?? null,
+                $page_size,
+                $page,
+                $clientId
+            ]);
+    
+            // Get output values
+            $output = DB::select('SELECT @action_message as message, @affected_rows as affected')[0];
+    
+            return response()->json([
+                'success' => true,
+                'message' => $output->message,
+                'affected_rows' => $output->affected,
+                'User_id' => $nextUserId,
+                'Client_id' => $clientId
+            ], 201);
+    
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
+    
+
+    // public function manageInquiry(Request $request)
+    // {
+    //     $actionType = $request->input('action_type');
+    //     $p_id = $request->input('p_id') ?? 0;
+    //     $p_status = $request->input('p_status') ?? 'OPN';  // Default status 'OPN'
+    //     $p_User_id = $request->input('p_User_id');
+    //     $p_Client_name = $request->input('p_Client_name');
+    //     $p_contact = $request->input('p_contact');
+    //     $p_email = $request->input('p_email');
+    //     $p_last_question = $request->input('p_last_question');
+    //     $p_agent_remarks = $request->input('p_agent_remarks');
+    //     $p_Next_followup = $request->input('p_Next_followup');
+    //     $p_page_size = $request->input('p_page_size') ?? 10;
+    //     $p_page = $request->input('p_page') ?? 1;
+    //     $p_Client_id = $request->input('p_Client_id');
+
+    //     $result = DB::select('CALL manage_inquiry(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
+    //         $actionType,
+    //         $p_id,
+    //         $p_status,
+    //         $p_User_id,
+    //         $p_Client_name,
+    //         $p_contact,
+    //         $p_email,
+    //         $p_last_question,
+    //         $p_agent_remarks,
+    //         $p_Next_followup,
+    //         $p_page_size,
+    //         $p_page,
+    //         $p_Client_id
+    //     ]);
+
+    //     $actionMessage = DB::select('SELECT @action_message as action_message');
+    //     $affectedRows = DB::select('SELECT @affected_rows as affected_rows');
+
+    //     return response()->json([
+    //         'data' => $result,
+    //         'message' => $actionMessage[0]->action_message ?? '',
+    //         'affected_rows' => $affectedRows[0]->affected_rows ?? 0
+    //     ]);
+    // }
 
 //     public function updateInquiry(Request $request)
 // {
@@ -424,69 +424,6 @@ public function deleteInquiry($id)
 }
 
 
-// public function getInquiryByClient($client_id)
-// {
-//     try {
-//         $actionType = 'G';  // For Get
-//         $p_id = null;
-//         $p_status = null;
-//         $p_User_id = null;
-//         $p_Client_name = null;
-//         $p_contact = null;
-//         $p_email = null;
-//         $p_last_question = null;
-//         $p_agent_remarks = null;
-//         $p_Next_followup = null;
-//         // $p_page_size = 10;   // You can make it dynamic
-//         // $p_page = 1;         // You can make it dynamic
-//         // $p_Client_id = $client_id;
-
-
-//         $p_page_size = request()->input('page_size', 10);   // Dynamic page size
-//         $p_page = request()->input('page', 1);             // Dynamic page number
-//         $p_Client_id = $client_id;
-//         // Call Stored Procedure
-//         $result = DB::select('CALL manage_inquiry(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
-//             $actionType,
-//             $p_id,
-//             $p_status,
-//             $p_User_id,
-//             $p_Client_name,
-//             $p_contact,
-//             $p_email,
-//             $p_last_question,
-//             $p_agent_remarks,
-//             $p_Next_followup,
-//             $p_page_size,
-//             $p_page,
-//             $p_Client_id
-//         ]);
-
-//         $actionMessage = DB::select('SELECT @action_message as action_message');
-//         $affectedRows = DB::select('SELECT @affected_rows as affected_rows');
-
-//         if (empty($result)) {
-//             return response()->json([
-//                 'status' => false,
-//                 'message' => 'No records found for this Client ID.',
-//                 'data' => []
-//             ], 404);
-//         }
-
-//         return response()->json([
-//             'status' => true,
-//             'message' => $actionMessage[0]->action_message ?? 'Records fetched successfully.',
-//             'data' => $result
-//         ]);
-
-//     } catch (\Exception $e) {
-//         return response()->json([
-//             'status' => false,
-//             'message' => 'Something went wrong!',
-//             'error' => $e->getMessage()
-//         ], 500);
-//     }
-// }
 
 
 public function getInquiryByClient($client_id)
@@ -563,29 +500,7 @@ public function getInquiryByClient($client_id)
 }
 
 
-    // public function getStatusCount($client_id)
-    // {
-    //     try {
-    //         $results = DB::select("
-    //             SELECT inq.status, COUNT(inq.status) AS status_count
-    //             FROM inquiry inq
-    //             INNER JOIN questions qu ON qu.id = inq.last_question
-    //             WHERE qu.client_id = ?
-    //             GROUP BY inq.status
-    //         ", [$client_id]);
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'data' => $results
-    //         ], 200);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Error fetching status count',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
+   
 
     public function getStatusCount($client_id)
 {
@@ -713,114 +628,6 @@ public function getUserInquiry(Request $request)
 }
 
 
-// public function getUserInquiry($user_id)
-// {
-//     try {
-//         // Find the user inquiry data with question relationship
-//         $inquiry = UserInquiry::with(['lastQuestion' => function($query) {
-//                 $query->select('id', 'question_text');
-//             }])
-//             ->where('user_id', $user_id)
-//             ->select('id', 'client_name', 'contact', 'email', 'last_question')
-//             ->first();
-
-//         if (!$inquiry) {
-//             return response()->json([
-//                 'status' => 'error',
-//                 'message' => 'No inquiry found for this user ID',
-//                 'data' => null
-//             ], 404);
-//         }
-
-//         // Format the response
-//         $response = [
-//             'id' => $inquiry->id,
-//             'client_name' => $inquiry->client_name,
-//             'contact' => $inquiry->contact,
-//             'email' => $inquiry->email,
-//             'last_question' => [
-//                 'id' => $inquiry->last_question,
-//                 'text' => $inquiry->lastQuestion->question_text ?? null
-//             ]
-//         ];
-
-//         return response()->json([
-//             'status' => 'success',
-//             'message' => 'User inquiry data retrieved successfully',
-//             'data' => $response
-//         ]);
-
-//     } catch (\Exception $e) {
-//         return response()->json([
-//             'status' => 'error',
-//             'message' => 'Failed to retrieve user inquiry data',
-//             'error' => $e->getMessage()
-//         ], 500);
-//     }
-// }
-
-
-// public function getNotifications($client_id)
-// {
-//     try {
-//         // Get count of "new" inquiries for a client (example: status = 'OPN')
-//         $newInquiriesCount = DB::table('inquiry as iq')
-//             ->leftJoin('questions as qu', 'qu.id', '=', 'iq.last_question')
-//             ->where('qu.client_id', $client_id)
-//             ->where('iq.status', 'OPN') // adjust this condition as needed
-//             ->count();
-
-//         return response()->json([
-//             'new_inquiries_count' => $newInquiriesCount
-//         ], 200);
-
-//     } catch (\Exception $e) {
-//         return response()->json([
-//             'error' => 'Something went wrong.',
-//             'message' => $e->getMessage()
-//         ], 500);
-//     }
-// }
-
-
-// public function getNewInquiries($client_id)
-// {
-//     // Define "recent" inquiries - adjust as needed
-//     $recentTime = Carbon::now()->subHours(24); // last 24 hours
-
-//     // Query new inquiries count
-//     $count = DB::table('inquiry as iq')
-//         ->leftJoin('questions as qu', 'qu.id', '=', 'iq.last_question')
-//         ->where('qu.client_id', $client_id)
-//         ->where('iq.created_at', '>=', $recentTime)
-//         ->count();
-
-//     return response()->json([
-//         'client_id' => $client_id,
-//         'new_inquiries_count' => $count
-//     ]);
-// }
-
-// public function getRecentInquiries($client_id)
-//     {
-//         // Define how recent is "recent" — adjust as needed
-//         $recentTime = Carbon::now()->subHours(24); // Last 24 hours
-
-//         // Fetch recent inquiries with details
-//         $inquiries = DB::table('inquiry as iq')
-//             ->leftJoin('questions as qu', 'qu.id', '=', 'iq.last_question')
-//             ->select('iq.*', 'qu.client_id')
-//             ->where('qu.client_id', $client_id)
-//             ->where('iq.created_at', '>=', $recentTime)
-//             ->orderBy('iq.created_at', 'desc')
-//             ->get();
-
-//         return response()->json([
-//             'client_id' => $client_id,
-//             'new_inquiries_count' => $inquiries->count(),
-//             'recent_inquiries' => $inquiries
-//         ]);
-//     }
 
 public function getNewInquiries($client_id)
 {

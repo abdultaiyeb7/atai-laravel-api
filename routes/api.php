@@ -147,7 +147,7 @@ Route::get('/inquiry/status-count/{client_id}', [InquiryController::class, 'getS
 
 // Route::get('user-inquiry/{user_id}', [InquiryController::class, 'getUserInquiry']);
 
-Route::post('user-inquiry', [InquiryController::class, 'getUserInquiry']);
+Route::get('user-inquiry', [InquiryController::class, 'getUserInquiry']);
 
 Route::post('/insert-client', [ClientController::class, 'insertClient']);
 
