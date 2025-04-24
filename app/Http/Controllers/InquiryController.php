@@ -16,7 +16,7 @@ class InquiryController extends Controller
     public function manageInquiry(Request $request)
     {
         try {
-            // Validate input
+            // Step 1: Validate
             $validated = $request->validate([
                 'Client_name' => 'required|string|max:50',
                 'contact' => 'nullable|string|max:15',
@@ -26,13 +26,12 @@ class InquiryController extends Controller
                 'Next_followup' => 'nullable|date'
             ]);
     
-            // Default values
             $status = 'OPN';
             $page_size = 0;
             $page = 1;
     
-            // Step 1: Get client_id from 'questions' table using last_question
-            $clientId = 1; // fallback default
+            // Step 2: Get client_id from last_question
+            $clientId = 1; // default
             if (!empty($validated['last_question'])) {
                 $clientIdFromQuestion = DB::table('questions')
                     ->where('id', $validated['last_question'])
@@ -43,22 +42,20 @@ class InquiryController extends Controller
                 }
             }
     
-            // Step 2: Get max User_id based on last_question -> client_id
+            // Step 3: Find all inquiries related to this client_id via questions
+            $relatedQuestionIds = DB::table('questions')
+                ->where('client_id', $clientId)
+                ->pluck('id');
+    
             $maxUserId = DB::table('inquiry')
-                ->where('last_question', function ($query) use ($clientId) {
-                    $query->select('id')
-                          ->from('questions')
-                          ->where('client_id', $clientId)
-                          ->orderByDesc('id')
-                          ->limit(1);
-                })
+                ->whereIn('last_question', $relatedQuestionIds)
                 ->select(DB::raw("MAX(CAST(User_id AS UNSIGNED)) as max_id"))
                 ->value('max_id');
     
             $nextUserId = str_pad((int)$maxUserId + 1, 4, '0', STR_PAD_LEFT);
     
-            // Step 3: Call the stored procedure
-            $results = DB::select('CALL manage_inquiry(?, @p_id, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
+            // Step 4: Call stored procedure
+            DB::select('CALL manage_inquiry(?, @p_id, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
                 'I',
                 $status,
                 $nextUserId,
@@ -73,7 +70,6 @@ class InquiryController extends Controller
                 $clientId
             ]);
     
-            // Get output values
             $output = DB::select('SELECT @action_message as message, @affected_rows as affected')[0];
     
             return response()->json([
@@ -91,6 +87,7 @@ class InquiryController extends Controller
             ], 500);
         }
     }
+    
     
 
     // public function manageInquiry(Request $request)
