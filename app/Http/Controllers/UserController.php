@@ -574,6 +574,47 @@ public function deleteUserByEmail(Request $request)
     }
 }
 
+public function softDeleteUser(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'user_id' => 'required'
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Validation failed!',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    try {
+        $user = DB::table('users')->where('user_id', $request->user_id)->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found!',
+            ], 404);
+        }
+
+        // Update status to 0 (soft delete)
+        DB::table('users')
+            ->where('user_id', $request->user_id)
+            ->update(['status' => 0]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User soft deleted successfully!',
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Database error!',
+            'error_details' => $e->getMessage()
+        ], 500);
+    }
+}
 
 
 
