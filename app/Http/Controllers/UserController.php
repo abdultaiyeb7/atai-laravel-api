@@ -332,56 +332,122 @@ public function verifyUserCredentials(Request $request)
 //     }
 // }
 
-    public function updateUser(Request $request)
-    {
-        $userId = $request->input('p_user_id');
-        if (!$userId) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'User ID is required for update'
-            ], 400);
-        }
-
-        $message = '';
-
-        try {
-            $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?, ?, ?)', [
-                'U', // Update action
-                $userId,
-                $request->input('p_user_name'),
-                $request->input('p_email'),
-                $request->input('p_mobile'),
-                $request->input('p_profile_pic'),
-                $request->input('p_status'),
-                $request->input('p_token'),
-                $request->input('p_otp'),
-                $request->input('p_is_verified'),
-                $request->input('p_is_available'),
-                $request->input('P_pannumber'),
-                $request->input('p_DocPath'),
-                $request->input('p_role_abbreviation'),
-                $request->input('p_ClientId'),
-                null, // p_page_size not needed for update, pass null
-                null  // p_page not needed for update, pass null
-            ]);
-
-            // Fetch stored procedure message
-            $messageResult = DB::select('SELECT @message as message');
-            $message = $messageResult[0]->message ?? 'User updated successfully.';
-
-            return response()->json([
-                'status' => 'success',
-                'message' => $message,
-                'data' => $result
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Database error!',
-                'error_details' => $e->getMessage()
-            ], 500);
-        }
+public function updateUser(Request $request)
+{
+    $userId = $request->input('p_user_id');
+    if (!$userId) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'User ID is required for update'
+        ], 400);
     }
+
+    $message = '';
+
+    try {
+        // Fetch existing email before update
+        $existingUser = DB::table('users')->where('user_id', $userId)->first();
+        $oldEmail = $existingUser->email ?? null;
+        $newEmail = $request->input('p_email');
+
+        $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?, ?, ?)', [
+            'U', // Update action
+            $userId,
+            $request->input('p_user_name'),
+            $newEmail,
+            $request->input('p_mobile'),
+            $request->input('p_profile_pic'),
+            $request->input('p_status'),
+            $request->input('p_token'),
+            $request->input('p_otp'),
+            $request->input('p_is_verified'),
+            $request->input('p_is_available'),
+            $request->input('P_pannumber'),
+            $request->input('p_DocPath'),
+            $request->input('p_role_abbreviation'),
+            $request->input('p_ClientId'),
+            null, // p_page_size not needed for update
+            null  // p_page not needed for update
+        ]);
+
+        // Get output message from procedure
+        $messageResult = DB::select('SELECT @message as message');
+        $message = $messageResult[0]->message ?? 'User updated successfully.';
+
+        // If email was changed, send verification email
+        if ($oldEmail && $oldEmail !== $newEmail) {
+            $verificationLink = "https://dev.atai.admin.raghavsolars.com/setup-password/{$userId}";
+
+            Mail::raw("Your email address has been updated. Please verify and setup your password using this link: {$verificationLink}", function ($mail) use ($newEmail) {
+                $mail->to($newEmail)
+                     ->subject('Email Address Updated - Action Required');
+            });
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => $message,
+            'data' => $result
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Database error!',
+            'error_details' => $e->getMessage()
+        ], 500);
+    }
+}
+
+    // public function updateUser(Request $request)
+    // {
+    //     $userId = $request->input('p_user_id');
+    //     if (!$userId) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'User ID is required for update'
+    //         ], 400);
+    //     }
+
+    //     $message = '';
+
+    //     try {
+    //         $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?, ?, ?)', [
+    //             'U', // Update action
+    //             $userId,
+    //             $request->input('p_user_name'),
+    //             $request->input('p_email'),
+    //             $request->input('p_mobile'),
+    //             $request->input('p_profile_pic'),
+    //             $request->input('p_status'),
+    //             $request->input('p_token'),
+    //             $request->input('p_otp'),
+    //             $request->input('p_is_verified'),
+    //             $request->input('p_is_available'),
+    //             $request->input('P_pannumber'),
+    //             $request->input('p_DocPath'),
+    //             $request->input('p_role_abbreviation'),
+    //             $request->input('p_ClientId'),
+    //             null, // p_page_size not needed for update, pass null
+    //             null  // p_page not needed for update, pass null
+    //         ]);
+
+    //         // Fetch stored procedure message
+    //         $messageResult = DB::select('SELECT @message as message');
+    //         $message = $messageResult[0]->message ?? 'User updated successfully.';
+
+    //         return response()->json([
+    //             'status' => 'success',
+    //             'message' => $message,
+    //             'data' => $result
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Database error!',
+    //             'error_details' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 
     public function deleteUser(Request $request)
 {
