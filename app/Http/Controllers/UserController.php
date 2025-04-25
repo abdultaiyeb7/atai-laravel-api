@@ -605,7 +605,7 @@ public function softDeleteUser(Request $request)
 
         return response()->json([
             'status' => 'success',
-            'message' => 'User soft deleted successfully!',
+            'message' => 'User has been successfully set to inactive state!',
         ]);
     } catch (\Exception $e) {
         return response()->json([
