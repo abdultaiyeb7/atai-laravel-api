@@ -210,7 +210,7 @@ public function verifyUserCredentials(Request $request)
     try {
         // Fetch user by email - now including abbreviation and status
         $user = DB::table('users')
-            ->select('user_id', 'email as username', 'token', 'ClientId', 'abbreviation', 'status')
+            ->select('user_id', 'email as username','user_name', 'token', 'ClientId', 'abbreviation', 'status')
             ->where('email', $request->email)
             ->first();
 
@@ -251,6 +251,7 @@ public function verifyUserCredentials(Request $request)
             'data' => [
                 'user_id'     => $user->user_id,
                 'username'   => $user->username,
+                'user_name'   => $user->user_name,
                 'client_id'   => $user->ClientId,
                 'role'   => $role,
                 'abbreviation' => $user->abbreviation // optional, if you want to send it to frontend
