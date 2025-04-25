@@ -332,7 +332,6 @@ public function verifyUserCredentials(Request $request)
 //     }
 // }
 
-
 public function updateUser(Request $request)
 {
     $userId = $request->input('p_user_id');
@@ -346,11 +345,38 @@ public function updateUser(Request $request)
     $message = '';
 
     try {
+        // ✅ Step 1: Get existing user details
+        $existingUser = DB::table('users')->where('user_id', $userId)->first();
+        if (!$existingUser) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        $existingEmail = $existingUser->email;
+        $newEmail = $request->input('p_email');
+        $userName = $request->input('p_user_name');
+
+        // ✅ Step 2: Check for duplicate email (ignore current user's email)
+        $duplicateEmail = DB::table('users')
+            ->where('email', $newEmail)
+            ->where('user_id', '!=', $userId)
+            ->exists();
+
+        if ($duplicateEmail) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The email address is already in use by another user.'
+            ], 409); // 409 Conflict
+        }
+
+        // ✅ Step 3: Run update procedure
         $result = DB::select('CALL manage_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @message, ?, ?, ?, ?, ?, ?)', [
             'U', // Update action
             $userId,
-            $request->input('p_user_name'),
-            $request->input('p_email'),
+            $userName,
+            $newEmail,
             $request->input('p_mobile'),
             $request->input('p_profile_pic'),
             $request->input('p_status'),
@@ -362,22 +388,22 @@ public function updateUser(Request $request)
             $request->input('p_DocPath'),
             $request->input('p_role_abbreviation'),
             $request->input('p_ClientId'),
-            null, // page_size
-            null  // page
+            null,
+            null
         ]);
 
         $messageResult = DB::select('SELECT @message as message');
         $message = $messageResult[0]->message ?? 'User updated successfully.';
 
-        // ✅ Send email after successful update
-        $userEmail = $request->input('p_email');
-        $userName = $request->input('p_user_name');
-        $verificationLink = "https://dev.atai.admin.raghavsolars.com/setup-password/{$userId}";
+        // ✅ Step 4: Send verification email if the email was changed
+        if ($existingEmail !== $newEmail) {
+            $verificationLink = "https://dev.atai.admin.raghavsolars.com/setup-password/{$userId}";
 
-        Mail::raw("Hello {$userName},\n\nYou have updated your email address. Please verify it using the link below:\n{$verificationLink}", function ($mail) use ($userEmail) {
-            $mail->to($userEmail)
-                ->subject('Email Address Updated - Verify Your Email');
-        });
+            Mail::raw("Hello {$userName},\n\nYou have updated your email address. Please verify it using the link below:\n{$verificationLink}", function ($mail) use ($newEmail) {
+                $mail->to($newEmail)
+                    ->subject('Email Address Updated - Verify Your Email');
+            });
+        }
 
         return response()->json([
             'status' => 'success',
@@ -392,6 +418,7 @@ public function updateUser(Request $request)
         ], 500);
     }
 }
+
     // public function updateUser(Request $request)
     // {
     //     $userId = $request->input('p_user_id');
