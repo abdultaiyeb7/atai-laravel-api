@@ -13,81 +13,160 @@ use App\Models\QuestionText; // Add this for the Question model
 
 class InquiryController extends Controller
 {
+    // public function manageInquiry(Request $request)
+    // {
+    //     try {
+    //         // Step 1: Validate
+    //         $validated = $request->validate([
+    //             'Client_name' => 'required|string|max:50',
+    //             'contact' => 'nullable|string|max:15',
+    //             'email' => 'nullable|string|email|max:100',
+    //             'last_question' => 'nullable|integer',
+    //             'agent_remarks' => 'nullable|string|max:5000',
+    //             'Next_followup' => 'nullable|date'
+    //         ]);
+    
+    //         $status = 'OPN';
+    //         $page_size = 0;
+    //         $page = 1;
+    
+    //         // Step 2: Get client_id from last_question
+    //         $clientId = 1; // default
+    //         if (!empty($validated['last_question'])) {
+    //             $clientIdFromQuestion = DB::table('questions')
+    //                 ->where('id', $validated['last_question'])
+    //                 ->value('client_id');
+    
+    //             if ($clientIdFromQuestion) {
+    //                 $clientId = $clientIdFromQuestion;
+    //             }
+    //         }
+    
+    //         // Step 3: Find all inquiries related to this client_id via questions
+    //         $relatedQuestionIds = DB::table('questions')
+    //             ->where('client_id', $clientId)
+    //             ->pluck('id');
+    
+    //         $maxUserId = DB::table('inquiry')
+    //             ->whereIn('last_question', $relatedQuestionIds)
+    //             ->select(DB::raw("MAX(CAST(User_id AS UNSIGNED)) as max_id"))
+    //             ->value('max_id');
+    
+    //         $nextUserId = str_pad((int)$maxUserId + 1, 4, '0', STR_PAD_LEFT);
+    
+    //         // Step 4: Call stored procedure
+    //         DB::select('CALL manage_inquiry(?, @p_id, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
+    //             'I',
+    //             $status,
+    //             $nextUserId,
+    //             $validated['Client_name'],
+    //             $validated['contact'] ?? null,
+    //             $validated['email'] ?? null,
+    //             $validated['last_question'] ?? null,
+    //             $validated['agent_remarks'] ?? null,
+    //             $validated['Next_followup'] ?? null,
+    //             $page_size,
+    //             $page,
+    //             $clientId
+    //         ]);
+    
+    //         $output = DB::select('SELECT @action_message as message, @affected_rows as affected')[0];
+    
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => $output->message,
+    //             'affected_rows' => $output->affected,
+    //             'User_id' => $nextUserId,
+    //             'Client_id' => $clientId
+    //         ], 201);
+    
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Error: ' . $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
     public function manageInquiry(Request $request)
-    {
-        try {
-            // Step 1: Validate
-            $validated = $request->validate([
-                'Client_name' => 'required|string|max:50',
-                'contact' => 'nullable|string|max:15',
-                'email' => 'nullable|string|email|max:100',
-                'last_question' => 'nullable|integer',
-                'agent_remarks' => 'nullable|string|max:5000',
-                'Next_followup' => 'nullable|date'
-            ]);
-    
-            $status = 'OPN';
-            $page_size = 0;
-            $page = 1;
-    
-            // Step 2: Get client_id from last_question
-            $clientId = 1; // default
-            if (!empty($validated['last_question'])) {
-                $clientIdFromQuestion = DB::table('questions')
-                    ->where('id', $validated['last_question'])
-                    ->value('client_id');
-    
-                if ($clientIdFromQuestion) {
-                    $clientId = $clientIdFromQuestion;
-                }
+{
+    DB::beginTransaction();
+    try {
+        // Step 1: Validate
+        $validated = $request->validate([
+            'Client_name' => 'required|string|max:50',
+            'contact' => 'nullable|string|max:15',
+            'email' => 'nullable|string|email|max:100',
+            'last_question' => 'nullable|integer',
+            'agent_remarks' => 'nullable|string|max:5000',
+            'Next_followup' => 'nullable|date'
+        ]);
+
+        $status = 'OPN';
+        $page_size = 0;
+        $page = 1;
+
+        // Step 2: Get client_id from last_question
+        $clientId = 1;
+        if (!empty($validated['last_question'])) {
+            $clientIdFromQuestion = DB::table('questions')
+                ->where('id', $validated['last_question'])
+                ->value('client_id');
+            if ($clientIdFromQuestion) {
+                $clientId = $clientIdFromQuestion;
             }
-    
-            // Step 3: Find all inquiries related to this client_id via questions
-            $relatedQuestionIds = DB::table('questions')
-                ->where('client_id', $clientId)
-                ->pluck('id');
-    
-            $maxUserId = DB::table('inquiry')
-                ->whereIn('last_question', $relatedQuestionIds)
-                ->select(DB::raw("MAX(CAST(User_id AS UNSIGNED)) as max_id"))
-                ->value('max_id');
-    
-            $nextUserId = str_pad((int)$maxUserId + 1, 4, '0', STR_PAD_LEFT);
-    
-            // Step 4: Call stored procedure
-            DB::select('CALL manage_inquiry(?, @p_id, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
-                'I',
-                $status,
-                $nextUserId,
-                $validated['Client_name'],
-                $validated['contact'] ?? null,
-                $validated['email'] ?? null,
-                $validated['last_question'] ?? null,
-                $validated['agent_remarks'] ?? null,
-                $validated['Next_followup'] ?? null,
-                $page_size,
-                $page,
-                $clientId
-            ]);
-    
-            $output = DB::select('SELECT @action_message as message, @affected_rows as affected')[0];
-    
-            return response()->json([
-                'success' => true,
-                'message' => $output->message,
-                'affected_rows' => $output->affected,
-                'User_id' => $nextUserId,
-                'Client_id' => $clientId
-            ], 201);
-    
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
-            ], 500);
         }
+
+        // Step 3: Lock related rows to prevent race conditions
+        $relatedQuestionIds = DB::table('questions')
+            ->where('client_id', $clientId)
+            ->pluck('id');
+
+        // Lock the rows for update
+        $maxUserId = DB::table('inquiry')
+            ->whereIn('last_question', $relatedQuestionIds)
+            ->lockForUpdate()
+            ->select(DB::raw("MAX(CAST(User_id AS UNSIGNED)) as max_id"))
+            ->value('max_id');
+
+        $nextUserId = str_pad((int)$maxUserId + 1, 4, '0', STR_PAD_LEFT);
+
+        // Step 4: Call stored procedure
+        DB::select('CALL manage_inquiry(?, @p_id, ?, ?, ?, ?, ?, ?, ?, ?, @action_message, @affected_rows, ?, ?, ?)', [
+            'I',
+            $status,
+            $nextUserId,
+            $validated['Client_name'],
+            $validated['contact'] ?? null,
+            $validated['email'] ?? null,
+            $validated['last_question'] ?? null,
+            $validated['agent_remarks'] ?? null,
+            $validated['Next_followup'] ?? null,
+            $page_size,
+            $page,
+            $clientId
+        ]);
+
+        $output = DB::select('SELECT @action_message as message, @affected_rows as affected')[0];
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => $output->message,
+            'affected_rows' => $output->affected,
+            'User_id' => $nextUserId,
+            'Client_id' => $clientId
+        ], 201);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ], 500);
     }
-    
+}
+
     
 
     // public function manageInquiry(Request $request)
