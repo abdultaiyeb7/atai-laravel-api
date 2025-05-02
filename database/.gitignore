@@ -1,0 +1,21 @@
+*.sqlite*
+# Ignore dependency folders
+/vendor/
+/node_modules/
+
+# Ignore Laravel environment & sensitive files
+.env
+.env.*
+.env.backup
+
+# Ignore compiled files
+/public/storage
+/storage/*.key
+*.log
+
+# Ignore IDE or system files
+.idea/
+.vscode/
+.DS_Store
+*.zip
+*.tar.gz
