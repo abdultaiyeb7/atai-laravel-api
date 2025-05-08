@@ -11,31 +11,11 @@
 </html> -->
 
 
-{{-- <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>{{ $data['subject'] }}</title>
-    <style>
-        /* Prevent text selection and right-click */
-        body {
-            -webkit-user-select: none; /* Chrome/Safari */
-            -moz-user-select: none;    /* Firefox */
-            -ms-user-select: none;     /* IE10+ */
-            user-select: none;         /* Standard */
-        }
-        a {
-            pointer-events: auto;
-            text-decoration: none;
-        }
-
-        .btn-link {
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: #fff !important;
-            border-radius: 5px;
-            display: inline-block;
-        }
-    </style>
+    
 </head>
 <body>
     <h3>Dear {{ $data['name'] }},</h3>
@@ -47,8 +27,8 @@
     <p>Best regards,</p>
     <p>[Admin Name]</p>
 </body>
-</html> --}}
-<!DOCTYPE html>
+</html>
+{{-- <!DOCTYPE html>
 <html>
 <head>
     <title>{{ $data['subject'] }}</title>
@@ -101,4 +81,4 @@
     <br>
     <p>Best regards,<br>[Admin Name]</p>
 </body>
-</html>
+</html> --}}

@@ -83,7 +83,7 @@ class UserController extends Controller
             $latestUserId    = $latestUser ? $latestUser->user_id : 633;
             $encryptedUserId = Crypt::encryptString($latestUserId);
             // Construct verification link
-            // $verificationLink = url("https://dev.atai.admin.raghavsolars.com/setup-password/{$latestUserId}");
+
             // link available for 5 mins
             // Generate signed URL with local domain (http://127.0.0.1 or app URL)
             $signedUrl = URL::temporarySignedRoute(
@@ -95,9 +95,11 @@ class UserController extends Controller
             // Replace domain with your desired domain
             $verificationLink = str_replace(
                 url('/'), // base URL like http://127.0.0.1:8000
-                'https://dev.atai.admin.raghavsolars.com',
+                'https://ataichatbot.mcndhanore.co.in',
                 $signedUrl
             );
+            // Use the signed URL as-is for localhost
+            // $verificationLink = $signedUrl;
 
             // Send email if email is provided
             if ($request->filled('p_email')) {
@@ -425,8 +427,31 @@ class UserController extends Controller
             $message       = $messageResult[0]->message ?? 'User updated successfully.';
 
             // ✅ Step 4: Send verification email if the email was changed
+            // if ($existingEmail !== $newEmail) {
+            //     $verificationLink = "https://dev.atai.admin.raghavsolars.com/setup-password/{$userId}";
+
+            //     Mail::raw("Hello {$userName},\n\nYou have updated your email address. Please verify it using the link below:\n{$verificationLink}", function ($mail) use ($newEmail) {
+            //         $mail->to($newEmail)
+            //             ->subject('Email Address Updated - Verify Your Email');
+            //     });
+            // }
+            // ✅ Step 4: Send verification email if the email was changed
             if ($existingEmail !== $newEmail) {
-                $verificationLink = "https://dev.atai.admin.raghavsolars.com/setup-password/{$userId}";
+                $encryptedUserId = Crypt::encryptString($userId);
+
+                // Generate signed URL (valid for 5 minutes)
+                $signedUrl = URL::temporarySignedRoute(
+                    'password.setup',
+                    now()->addMinutes(5),
+                    ['user_id' => $encryptedUserId]
+                );
+
+                // Replace the base URL with your production domain
+                $verificationLink = str_replace(
+                    url('/'),
+                    'https://ataichatbot.mcndhanore.co.in',
+                    $signedUrl
+                );
 
                 Mail::raw("Hello {$userName},\n\nYou have updated your email address. Please verify it using the link below:\n{$verificationLink}", function ($mail) use ($newEmail) {
                     $mail->to($newEmail)
