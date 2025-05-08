@@ -1,4 +1,5 @@
 *.sqlite*
+<<<<<<< HEAD
 # Ignore dependency folders
 /vendor/
 /node_modules/
@@ -19,3 +20,5 @@
 .DS_Store
 *.zip
 *.tar.gz
+=======
+>>>>>>> 12f06b7fe3a132440ea8ea03b4f1820664dc5667

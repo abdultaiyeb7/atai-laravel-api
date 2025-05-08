@@ -15,18 +15,25 @@
 <html>
 <head>
     <title>{{ $data['subject'] }}</title>
+<<<<<<< HEAD
     
+=======
+>>>>>>> 12f06b7fe3a132440ea8ea03b4f1820664dc5667
 </head>
 <body>
     <h3>Dear {{ $data['name'] }},</h3>
     <p>You have been added as an agent on ATai Chatbot. Please verify your email to complete the registration.</p>
     <p>Click the link below to verify your email:</p>
+<<<<<<< HEAD
     <p>These link will be expire within 5 mins from the time it is sent to your email</p>
+=======
+>>>>>>> 12f06b7fe3a132440ea8ea03b4f1820664dc5667
     <p><a href="{{ $data['verification_link'] }}" style="padding: 10px 20px; background-color: #28a745; color: #fff; text-decoration: none; border-radius: 5px;">Verify Email</a></p>
     <br>
     <p>Best regards,</p>
     <p>[Admin Name]</p>
 </body>
+<<<<<<< HEAD
 </html>
 {{-- <!DOCTYPE html>
 <html>
@@ -82,3 +89,6 @@
     <p>Best regards,<br>[Admin Name]</p>
 </body>
 </html> --}}
+=======
+</html>
+>>>>>>> 12f06b7fe3a132440ea8ea03b4f1820664dc5667

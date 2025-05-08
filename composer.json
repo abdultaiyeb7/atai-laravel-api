@@ -14,7 +14,10 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+<<<<<<< HEAD
         "kitloong/laravel-migrations-generator": "^7.1",
+=======
+>>>>>>> 12f06b7fe3a132440ea8ea03b4f1820664dc5667
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.41",
