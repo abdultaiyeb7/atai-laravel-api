@@ -1,5 +1,5 @@
 <?php
-<<<<<<< HEAD
+
 namespace App\Http\Controllers;
 
 use App\Mail\SendMail;
@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
-=======
+
 
 namespace App\Http\Controllers;
 
@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
 
-<<<<<<< HEAD
+
     public function manageUser(Request $request)
     {
         // Validate input
@@ -309,7 +309,7 @@ class UserController extends Controller
             ], 500);
         }
     }
-=======
+
 public function manageUser(Request $request)
 {
     // Validate input
@@ -564,7 +564,7 @@ public function verifyUserCredentials(Request $request)
     }
 }
 
->>>>>>> 12f06b7fe3a132440ea8ea03b4f1820664dc5667
+
 
 // public function verifyUserCredentials(Request $request)
 // {
@@ -610,11 +610,11 @@ public function verifyUserCredentials(Request $request)
 //             $role = 'admin';
 //         } elseif ($user->abbreviation === 'S') {
 //             $role = 'agent';
-<<<<<<< HEAD
+
 //         }
-=======
+
 //         } 
->>>>>>> 12f06b7fe3a132440ea8ea03b4f1820664dc5667
+
 
 //         return response()->json([
 //             'status' => 'success',
@@ -636,7 +636,7 @@ public function verifyUserCredentials(Request $request)
 //     }
 // }
 
-<<<<<<< HEAD
+
     public function updateUser(Request $request)
     {
         $userId = $request->input('p_user_id');
@@ -747,7 +747,7 @@ public function verifyUserCredentials(Request $request)
         }
     }
 
-=======
+
 public function updateUser(Request $request)
 {
     $userId = $request->input('p_user_id');
@@ -835,7 +835,7 @@ public function updateUser(Request $request)
     }
 }
 
->>>>>>> 12f06b7fe3a132440ea8ea03b4f1820664dc5667
+
     // public function updateUser(Request $request)
     // {
     //     $userId = $request->input('p_user_id');
@@ -888,7 +888,7 @@ public function updateUser(Request $request)
     // }
 
     public function deleteUser(Request $request)
-<<<<<<< HEAD
+
     {
         $userId = $request->input('p_user_id');
 
@@ -980,7 +980,7 @@ public function updateUser(Request $request)
             ], 500);
         }
     }
-=======
+
 {
     $userId = $request->input('p_user_id');
 
@@ -1073,7 +1073,7 @@ public function getUser(Request $request)
         ], 500);
     }
 }
->>>>>>> 12f06b7fe3a132440ea8ea03b4f1820664dc5667
+
 
 // public function getUser(Request $request)
 // {
@@ -1132,7 +1132,7 @@ public function getUser(Request $request)
 //     }
 // }
 
-<<<<<<< HEAD
+
     public function deleteUserByEmail(Request $request)
     {
         // Validate input
@@ -1214,7 +1214,7 @@ public function getUser(Request $request)
             ], 500);
         }
     }
-=======
+
 public function deleteUserByEmail(Request $request)
 {
     // Validate input
@@ -1298,6 +1298,6 @@ public function softDeleteUser(Request $request)
 }
 
 
->>>>>>> 12f06b7fe3a132440ea8ea03b4f1820664dc5667
+
 
 }
